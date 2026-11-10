@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MedicineDetailPage"
+             x:DataType="vm:MedicineDetailViewModel"
+             Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Edit" IconImageSource="{DynamicResource ToolbarIconEdit}" Clicked="OnEditClicked" Order="Primary" Priority="0"/>
+    </ContentPage.ToolbarItems>
+
+    <ContentPage.Resources>
+        <!-- Promotion candidate: "StatTile" (CardFlat with tighter padding) for key-fact grids. -->
+        <Style x:Key="StatTile" TargetType="Border" BasedOn="{StaticResource CardFlat}">
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid>
+        <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="0" Padding="{StaticResource PagePadding}">
+
+                    <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                        <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                    </Border>
+
+                    <!-- Header card -->
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Border Grid.Column="0" Style="{StaticResource IconCircle}">
+                                    <controls:TintedImage Source="{Binding StockUnitImage}" SemanticProperties.Description="Medicine" TintColor="{DynamicResource Primary}"/>
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Title}" Style="{StaticResource TitleMedium}" SemanticProperties.HeadingLevel="Level1"/>
+                                    <Label Text="{Binding ScheduleSummaryText}" Style="{StaticResource Caption}"/>
+                                </VerticalStackLayout>
+                                <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalOptions="Start"
+                                        BackgroundColor="{Binding StatusChipColor, Converter={StaticResource ThemeColorConverter}}">
+                                    <Label Text="{Binding StatusChipText}" Style="{StaticResource ChipText}" TextColor="{DynamicResource TextInverse}"/>
+                                </Border>
+                            </Grid>
+
+                            <Label Text="{Binding Medicine.Instructions}" Style="{StaticResource BodySecondary}" IsVisible="{Binding HasInstructions}"/>
+
+                            <!-- Key facts grid -->
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource StatTile}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Stock" Style="{StaticResource Overline}"/>
+                                        <HorizontalStackLayout Spacing="4">
+                                            <Label Text="{Binding StockValueText}" Style="{StaticResource StatValue}"/>
+                                            <Label Text="{Binding StockUnitText}" Style="{StaticResource StatUnit}" VerticalOptions="End" Margin="0,0,0,5"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding StockDaysText}" Style="{StaticResource Caption}"
+                                               IsVisible="{Binding StockDaysText, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource StatTile}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Course" Style="{StaticResource Overline}"/>
+                                        <Label Text="{Binding DaysLeftValueText}" Style="{StaticResource StatValue}"/>
+                                        <Label Text="{Binding DaysLeftCaption}" Style="{StaticResource Caption}"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource StatTile}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Adherence" Style="{StaticResource Overline}"/>
+                                        <Label Text="{Binding AdherenceValueText}" Style="{StaticResource StatValue}"/>
+                                        <Label Text="last 30 days" Style="{StaticResource Caption}"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource StatTile}">
+                                    <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                                        <Label Text="Progress" Style="{StaticResource Overline}"/>
+                                        <ProgressBar Progress="{Binding CourseProgress}" IsVisible="{Binding HasCourseProgress}"/>
+                                        <Label Text="{Binding CourseProgressText}" Style="{StaticResource Caption}" IsVisible="{Binding HasCourseProgress}"/>
+                                        <Label Text="Ongoing medicine, no fixed course" Style="{StaticResource Caption}"
+                                               IsVisible="{Binding HasCourseProgress, Converter={StaticResource InverseBoolConverter}}"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </Grid>
+
+                            <Button Text="Start new course" Style="{StaticResource SecondaryButton}" Command="{Binding NewCourseCommand}"
+                                    IsVisible="{Binding IsInactive}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Today's schedule -->
+                    <controls:SectionHeaderView Title="Today's schedule" IsVisible="{Binding IsActive}"/>
+                    <VerticalStackLayout Spacing="0" IsVisible="{Binding IsActive}">
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Schedules}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TodayScheduleItem">
+                                    <Border Style="{StaticResource Card}" Padding="12" Margin="0">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                            <Border Grid.Column="0" Style="{StaticResource IconCircle}">
+                                                <Grid>
+                                                    <controls:TintedImage Source="ic_schedule.png" IsVisible="{Binding IsDone, Converter={StaticResource InverseBoolConverter}}" TintColor="{DynamicResource Primary}"/>
+                                                    <controls:TintedImage Source="ic_check_circle.png" IsVisible="{Binding IsDone}" TintColor="{DynamicResource Success}"/>
+                                                </Grid>
+                                            </Border>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                <Label Text="{Binding ScheduleTimeDisplay}" Style="{StaticResource TitleSmall}"/>
+                                                <Label Text="{Binding StatusText}" Style="{StaticResource Caption}"
+                                                       TextColor="{Binding StatusColor, Converter={StaticResource ThemeColorConverter}}"/>
+                                                <Label Text="{Binding OutOfStockText}" Style="{StaticResource Caption}" TextColor="{DynamicResource Warning}"
+                                                       IsVisible="{Binding ShowOutOfStockWarning}"/>
+                                            </VerticalStackLayout>
+                                            <Grid Grid.Column="2" VerticalOptions="Center" MinimumWidthRequest="72">
+                                                <Button Text="Take" Style="{StaticResource SmallButton}" MinimumWidthRequest="72"
+                                                        IsVisible="{Binding CanTake}"
+                                                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineDetailViewModel}}, Path=TakeDoseCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        SemanticProperties.Description="{Binding ScheduleTimeDisplay, StringFormat='Take the {0} dose'}"/>
+                                                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" WidthRequest="24" HeightRequest="24"/>
+                                                <Border Style="{StaticResource ChipSuccess}" IsVisible="{Binding IsDone}" HorizontalOptions="End" VerticalOptions="Center">
+                                                    <Label Text="Taken" Style="{StaticResource ChipTextSuccess}"/>
+                                                </Border>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <Border Style="{StaticResource CardFlat}" IsVisible="{Binding HasSchedules, Converter={StaticResource InverseBoolConverter}}">
+                            <Label Text="No doses left today. Tomorrow's doses will appear here after midnight." Style="{StaticResource BodySecondary}"/>
+                        </Border>
+                        <Button Text="Log past doses" Style="{StaticResource OutlineButton}" Command="{Binding BackfillPastDosesCommand}"
+                                IsVisible="{Binding CanBackfill}" Margin="0,12,0,0"/>
+                    </VerticalStackLayout>
+
+                    <!-- Course history -->
+                    <controls:SectionHeaderView Title="Course history"/>
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Courses}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CourseDisplayItem">
+                                <Border Style="{StaticResource Card}" Padding="12" Margin="0">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Grid Grid.Column="0" WidthRequest="22" HeightRequest="22" VerticalOptions="Center" SemanticProperties.Description="{Binding StatusText}">
+                                            <controls:TintedImage Source="ic_schedule.png" IsVisible="{Binding IsActive}" TintColor="{DynamicResource Primary}"/>
+                                            <controls:TintedImage Source="ic_check_circle.png" IsVisible="{Binding IsCompleted}" TintColor="{DynamicResource Success}"/>
+                                            <controls:TintedImage Source="ic_warning.png" IsVisible="{Binding IsIncomplete}" TintColor="{DynamicResource Warning}"/>
+                                        </Grid>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                            <Label Text="{Binding DateRangeText}" Style="{StaticResource BodyStrong}"/>
+                                            <Label Text="{Binding SummaryText}" Style="{StaticResource Caption}"/>
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2" Text="{Binding StatusText}" Style="{StaticResource CaptionStrong}" VerticalOptions="Center"
+                                               TextColor="{Binding StatusColor, Converter={StaticResource ThemeColorConverter}}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Border Style="{StaticResource CardFlat}" IsVisible="{Binding HasCourses, Converter={StaticResource InverseBoolConverter}}">
+                        <Label Text="No course history yet." Style="{StaticResource BodySecondary}"/>
+                    </Border>
+
+                    <!-- Recent logs -->
+                    <controls:SectionHeaderView Title="Recent logs (14 days)"/>
+                    <Border Style="{StaticResource Card}" Padding="4,8" IsVisible="{Binding HasRecentLogs}">
+                        <VerticalStackLayout Spacing="0" BindableLayout.ItemsSource="{Binding RecentLogs}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DoseLogDisplayItem">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Padding="10,8" MinimumHeightRequest="44">
+                                        <Grid Grid.Column="0" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" SemanticProperties.Description="{Binding StatusText}">
+                                            <controls:TintedImage Source="ic_check_circle.png" IsVisible="{Binding IsTaken}" TintColor="{DynamicResource Success}"/>
+                                            <controls:TintedImage Source="ic_cancel.png" IsVisible="{Binding IsTaken, Converter={StaticResource InverseBoolConverter}}" TintColor="{DynamicResource Danger}"/>
+                                        </Grid>
+                                        <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource Body}" VerticalOptions="Center"/>
+                                        <Label Grid.Column="2" Text="{Binding TimeText}" Style="{StaticResource CaptionStrong}" VerticalOptions="Center"/>
+                                        <Label Grid.Column="3" Text="{Binding StockAfterText}" Style="{StaticResource Caption}" VerticalOptions="Center" MinimumWidthRequest="48"
+                                               HorizontalTextAlignment="End"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource CardFlat}" IsVisible="{Binding HasRecentLogs, Converter={StaticResource InverseBoolConverter}}">
+                        <Label Text="No doses logged in the last two weeks." Style="{StaticResource BodySecondary}"/>
+                    </Border>
+
+                    <!-- Notes -->
+                    <controls:SectionHeaderView Title="Notes" IsVisible="{Binding HasNotes}"/>
+                    <Border Style="{StaticResource Card}" IsVisible="{Binding HasNotes}">
+                        <Label Text="{Binding Medicine.Notes}" Style="{StaticResource Body}"/>
+                    </Border>
+
+                    <!-- Danger zone -->
+                    <BoxView Style="{StaticResource Divider}" Margin="0,16,0,16"/>
+                    <Button Text="Stop this medicine" Style="{StaticResource OutlineButton}" Command="{Binding DeactivateCommand}"
+                            IsVisible="{Binding IsActive}" Margin="0,0,0,12"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+                    <Button Text="Delete medicine and history" Style="{StaticResource DangerOutlineButton}" Command="{Binding DeleteCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"/>
+    </Grid>
+</ContentPage>

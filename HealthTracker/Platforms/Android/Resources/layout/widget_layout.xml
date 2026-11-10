@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews layout: only LinearLayout / TextView / View / ProgressBar, no custom views. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
+
+    <!-- Header: title + date -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Chartwell"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:textAllCaps="true"
+            android:textColor="@color/widget_text_secondary"/>
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/widget_text_secondary"/>
+    </LinearLayout>
+
+    <!-- Next dose: the headline of the widget -->
+    <TextView
+        android:id="@+id/widget_next_dose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Next: --"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="@color/widget_title"/>
+
+    <!-- Progress text + bar -->
+    <TextView
+        android:id="@+id/widget_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="-- of -- doses today"
+        android:textSize="13sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/widget_accent"/>
+
+    <ProgressBar
+        android:id="@+id/widget_progress_bar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="6dp"
+        android:progressDrawable="@drawable/widget_progress"
+        android:max="100"
+        android:progress="0"/>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/widget_divider"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Stats row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/widget_heart_rate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="&#x2665; --"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_heart"/>
+        <TextView
+            android:id="@+id/widget_blood_pressure"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="BP --"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:textColor="@color/widget_bp"/>
+    </LinearLayout>
+
+</LinearLayout>

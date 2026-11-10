@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             x:Class="HealthTracker.Views.DoctorVisitDetailPage"
+             Title="Visit">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Edit" IconImageSource="{DynamicResource ToolbarIconEdit}" Order="Primary" Priority="0" Clicked="OnEditClicked"/>
+        <ToolbarItem Text="Delete" Order="Secondary" Priority="1" Clicked="OnDeleteClicked"/>
+    </ContentPage.ToolbarItems>
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="0" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                    <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                </Border>
+
+                <!-- Header -->
+                <Border Style="{StaticResource CardHero}" IsVisible="{Binding HasVisit}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                        <Border Grid.Column="0" Style="{StaticResource IconCircleLarge}" BackgroundColor="{DynamicResource HeroChipFill}"
+                                WidthRequest="56" HeightRequest="56" StrokeShape="RoundRectangle 28" Padding="14" VerticalOptions="Start">
+                            <controls:TintedImage Source="ic_person.png" Aspect="AspectFit" TintColor="{DynamicResource OnHero}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="{Binding DoctorName}" Style="{StaticResource TitleLarge}" TextColor="{DynamicResource OnHero}"
+                                   SemanticProperties.HeadingLevel="Level1"/>
+                            <Label Text="{Binding Hospital}" Style="{StaticResource BodyLarge}" TextColor="{DynamicResource OnHero}"
+                                   Opacity="0.9" IsVisible="{Binding HasHospital}"/>
+                            <HorizontalStackLayout Spacing="6">
+                                <controls:TintedImage Source="ic_event.png" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" TintColor="{DynamicResource OnHero}"/>
+                                <Label Text="{Binding VisitDateText}" Style="{StaticResource Caption}"
+                                       TextColor="{DynamicResource OnHero}" Opacity="0.9" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <Border Style="{StaticResource HeroChip}" Margin="0,4,0,0"
+                                    IsVisible="{Binding HasFollowUp}">
+                                <HorizontalStackLayout Spacing="6">
+                                    <controls:TintedImage Source="ic_notifications.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center"
+                                           IsVisible="{Binding IsFollowUpUpcoming}" TintColor="{DynamicResource OnHero}"/>
+                                    <Label Text="{Binding FollowUpText}" Style="{StaticResource HeroChipText}"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Diagnosis -->
+                <controls:SectionHeaderView Title="Diagnosis"/>
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Label Text="{Binding Diagnosis}" Style="{StaticResource Body}" IsVisible="{Binding HasDiagnosis}"/>
+                        <Label Text="No diagnosis recorded." Style="{StaticResource BodySecondary}"
+                               IsVisible="{Binding HasDiagnosis, Converter={StaticResource InverseBoolConverter}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Notes -->
+                <controls:SectionHeaderView Title="Notes"/>
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Label Text="{Binding Notes}" Style="{StaticResource Body}" IsVisible="{Binding HasNotes}"/>
+                        <Label Text="No notes for this visit." Style="{StaticResource BodySecondary}"
+                               IsVisible="{Binding HasNotes, Converter={StaticResource InverseBoolConverter}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Prescription -->
+                <controls:SectionHeaderView Title="Prescription"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="12">
+                        <Border StrokeShape="RoundRectangle 12" StrokeThickness="0" HeightRequest="220"
+                                BackgroundColor="{DynamicResource SurfaceVariant}" Padding="0"
+                                IsVisible="{Binding HasPrescriptionImage}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnPrescriptionTapped"/>
+                            </Border.GestureRecognizers>
+                            <Grid>
+                                <Image Source="{Binding PrescriptionImage}" Aspect="AspectFill"
+                                       SemanticProperties.Description="Prescription image, tap to open full screen"/>
+                                <Border Style="{StaticResource Chip}" BackgroundColor="{DynamicResource Surface}"
+                                        HorizontalOptions="End" VerticalOptions="End" Margin="10">
+                                    <HorizontalStackLayout Spacing="4">
+                                        <controls:TintedImage Source="ic_visibility.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" TintColor="{DynamicResource TextSecondary}"/>
+                                        <Label Text="Open" Style="{StaticResource ChipText}"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <Label Text="No prescription image attached." Style="{StaticResource BodySecondary}"
+                               IsVisible="{Binding HasPrescriptionImage, Converter={StaticResource InverseBoolConverter}}"/>
+                        <Button Text="{Binding PrescriptionButtonText}" Style="{StaticResource SecondaryButton}"
+                                Clicked="OnChangeImageClicked"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Attached reports -->
+                <controls:SectionHeaderView Title="Attached reports" ActionText="Attach report" ActionCommand="{Binding AttachReportCommand}"/>
+                <Label Text="No reports attached yet." Style="{StaticResource BodySecondary}" Margin="4,0,4,12"
+                       IsVisible="{Binding HasReports, Converter={StaticResource InverseBoolConverter}}"/>
+                <VerticalStackLayout Spacing="0" BindableLayout.ItemsSource="{Binding Reports}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnReportTapped" CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" Style="{StaticResource IconCircle}">
+                                        <controls:TintedImage Source="{Binding IconSource}" Aspect="AspectFit" TintColor="{DynamicResource OnPrimaryContainer}"/>
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding Title}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation" MaxLines="1"/>
+                                        <Label Text="{Binding TypeAndDateText}" Style="{StaticResource Caption}"/>
+                                    </VerticalStackLayout>
+                                    <controls:TintedImageButton Grid.Column="2" Source="ic_share.png" Style="{StaticResource IconButton}" VerticalOptions="Center"
+                                                 Clicked="OnShareReportClicked" CommandParameter="{Binding .}"
+                                                 SemanticProperties.Description="Share report" TintColor="{DynamicResource TextSecondary}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+    </Grid>
+</ContentPage>

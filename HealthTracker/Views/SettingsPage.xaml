@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Settings"
+             BackgroundColor="{DynamicResource Background}">
+    <ContentPage.Resources>
+        <!-- Promotion candidates: SettingsRowTitle/Caption, SegmentChip(+Text), RowDivider -->
+        <Style x:Key="RowTitle" TargetType="Label" BasedOn="{StaticResource BodyStrong}">
+            <Setter Property="LineBreakMode" Value="TailTruncation"/>
+        </Style>
+        <Style x:Key="RowCaption" TargetType="Label" BasedOn="{StaticResource Caption}">
+            <Setter Property="LineBreakMode" Value="WordWrap"/>
+        </Style>
+        <Style x:Key="RowDivider" TargetType="BoxView" BasedOn="{StaticResource Divider}">
+            <Setter Property="Margin" Value="56,10,0,10"/>
+        </Style>
+        <!-- One segment of a segmented control. Selected look is applied with a DataTrigger per chip. -->
+        <Style x:Key="SegmentChip" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="Stroke" Value="{DynamicResource OutlineStrong}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 999"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinimumHeightRequest" Value="44"/>
+        </Style>
+        <Style x:Key="SegmentChipText" TargetType="Label">
+            <Setter Property="FontFamily" Value="AppSemibold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextColor" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="0" Padding="{StaticResource PagePadding}">
+
+                <!-- Error banner -->
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <controls:TintedImage Source="ic_error.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Start" TintColor="{DynamicResource Danger}"/>
+                        <Label Grid.Column="1" Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                    </Grid>
+                </Border>
+
+                <!-- ============ Appearance ============ -->
+                <controls:SectionHeaderView Title="Appearance"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_dark_mode.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Theme" Style="{StaticResource RowTitle}"/>
+                                <Label Text="System follows your phone's dark mode setting." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Border Grid.Column="0" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Follow system theme">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSystemTheme}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                        <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SetThemeCommand}" CommandParameter="System"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="System" Style="{StaticResource SegmentChipText}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSystemTheme}" Value="True">
+                                            <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Light theme">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsLightTheme}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                        <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SetThemeCommand}" CommandParameter="Light"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="Light" Style="{StaticResource SegmentChipText}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsLightTheme}" Value="True">
+                                            <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Dark theme">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                        <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SetThemeCommand}" CommandParameter="Dark"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="Dark" Style="{StaticResource SegmentChipText}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ Security ============ -->
+                <controls:SectionHeaderView Title="Security"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="0">
+                        <!-- App lock row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_lock.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="App lock" Style="{StaticResource RowTitle}"/>
+                                <Label Text="{Binding PinStatusText}" Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Button Grid.Column="2" Text="{Binding PinActionText}" Style="{StaticResource SmallTextButton}"
+                                    Command="{Binding TogglePinEditorCommand}" VerticalOptions="Center"/>
+                        </Grid>
+
+                        <!-- Inline PIN editor -->
+                        <VerticalStackLayout Spacing="8" Margin="0,12,0,0" IsVisible="{Binding IsPinEditorOpen}">
+                            <Label Text="New PIN (4-6 digits)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding NewPin}" IsPassword="True" Keyboard="Numeric" MaxLength="6" Placeholder="Enter new PIN"/>
+                            </Border>
+                            <Label Text="Confirm PIN" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding ConfirmPin}" IsPassword="True" Keyboard="Numeric" MaxLength="6" Placeholder="Repeat the PIN"/>
+                            </Border>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                                <Button Grid.Column="0" Text="Save PIN" Style="{StaticResource SmallButton}" Command="{Binding SavePinCommand}"/>
+                                <Button Grid.Column="1" Text="Remove PIN" Style="{StaticResource SmallOutlineButton}"
+                                        TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
+                                        Command="{Binding RemovePinCommand}" IsVisible="{Binding PinConfigured}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <BoxView Style="{StaticResource RowDivider}"/>
+
+                        <!-- Biometric row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_fingerprint.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Unlock with fingerprint or face" Style="{StaticResource RowTitle}"/>
+                                <Label Text="{Binding BiometricCaption}" Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="2" IsToggled="{Binding BiometricEnabled}" IsEnabled="{Binding CanUseBiometric}"
+                                    VerticalOptions="Center" SemanticProperties.Description="Biometric unlock"/>
+                        </Grid>
+
+                        <BoxView Style="{StaticResource RowDivider}"/>
+
+                        <!-- Auto-lock info row -->
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_schedule.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Lock after 2 minutes in background" Style="{StaticResource RowTitle}"/>
+                                <Label Text="The PIN is asked again when the app has been in the background for 2 minutes or more." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ Google Drive backup ============ -->
+                <controls:SectionHeaderView Title="Google Drive backup"/>
+
+                <!-- Not configured in this build -->
+                <Border Style="{StaticResource CardFlat}" IsVisible="{Binding IsCloudNotConfigured}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource SurfaceElevated}">
+                            <controls:TintedImage Source="ic_cloud_off.png" TintColor="{DynamicResource TextTertiary}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                            <Label Text="Google Drive backup isn't configured in this build" Style="{StaticResource RowTitle}" TextColor="{DynamicResource TextSecondary}"/>
+                            <Label Text="Cloud backup needs a Google OAuth client id compiled into the app (Constants/CloudConstants.cs). Until then, use the local backup below." Style="{StaticResource RowCaption}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" IsVisible="{Binding IsCloudConfigured}">
+                    <VerticalStackLayout Spacing="0">
+                        <!-- Account row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_person.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding AccountText}" Style="{StaticResource RowTitle}"/>
+                                <Label Text="{Binding LastBackupText}" Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Grid Grid.Column="2" VerticalOptions="Center">
+                                <Button Text="{Binding SignInOutText}" Style="{StaticResource SmallTextButton}"
+                                        Command="{Binding SignInOutCommand}"
+                                        IsVisible="{Binding IsSigningIn, Converter={StaticResource InverseBoolConverter}}"/>
+                                <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="24" HeightRequest="24"
+                                                   IsVisible="{Binding IsSigningIn}"/>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Progress while uploading / restoring -->
+                        <VerticalStackLayout Spacing="6" Margin="0,12,0,0" IsVisible="{Binding IsCloudIdle, Converter={StaticResource InverseBoolConverter}}">
+                            <ProgressBar Progress="{Binding CloudProgress}"/>
+                            <HorizontalStackLayout Spacing="8">
+                                <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="18" HeightRequest="18"/>
+                                <Label Text="{Binding CloudProgressText}" Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Actions (signed in) -->
+                        <VerticalStackLayout Spacing="8" Margin="0,12,0,0" IsVisible="{Binding IsSignedIn}">
+                            <Button Text="Back up now" Command="{Binding BackupToCloudCommand}"
+                                    IsEnabled="{Binding IsCloudIdle}"/>
+                            <Button Text="Restore from Drive" Style="{StaticResource OutlineButton}"
+                                    Command="{Binding RestoreFromCloudCommand}" IsEnabled="{Binding IsCloudIdle}"/>
+                        </VerticalStackLayout>
+                        <Label Text="Sign in to keep a copy of your data in a hidden app folder of your own Google Drive."
+                               Style="{StaticResource RowCaption}" Margin="0,12,0,0" IsVisible="{Binding IsSignedOut}"/>
+
+                        <BoxView Style="{StaticResource RowDivider}"/>
+
+                        <!-- Auto backup -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_sync.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Automatic daily backup" Style="{StaticResource RowTitle}"/>
+                                <Label Text="Uploads once a day when the app goes to the background." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="2" IsToggled="{Binding AutoBackupEnabled}" IsEnabled="{Binding IsSignedIn}"
+                                    VerticalOptions="Center" SemanticProperties.Description="Automatic daily backup"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ Local backup ============ -->
+                <controls:SectionHeaderView Title="Local backup"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExportBackupCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_backup.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Export backup (.zip)" Style="{StaticResource RowTitle}"/>
+                                <Label Text="Database and all stored files, shared through the system share sheet." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                                <controls:TintedImage Source="ic_chevron_right.png" WidthRequest="24" HeightRequest="24"
+                                       IsVisible="{Binding IsExporting, Converter={StaticResource InverseBoolConverter}}" TintColor="{DynamicResource TextTertiary}"/>
+                                <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="24" HeightRequest="24" IsVisible="{Binding IsExporting}"/>
+                            </Grid>
+                        </Grid>
+
+                        <BoxView Style="{StaticResource RowDivider}"/>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding RestoreFromFileCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_restore.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Restore from file" Style="{StaticResource RowTitle}"/>
+                                <Label Text="Pick a Chartwell backup .zip. Replaces everything on this device." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                            <Grid Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                                <controls:TintedImage Source="ic_chevron_right.png" WidthRequest="24" HeightRequest="24"
+                                       IsVisible="{Binding IsRestoringLocal, Converter={StaticResource InverseBoolConverter}}" TintColor="{DynamicResource TextTertiary}"/>
+                                <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="24" HeightRequest="24" IsVisible="{Binding IsRestoringLocal}"/>
+                            </Grid>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ AI assistant ============ -->
+                <controls:SectionHeaderView Title="AI assistant"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="0">
+                        <!-- Key row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource AccentContainer}">
+                                <controls:TintedImage Source="ic_key.png" TintColor="{DynamicResource Accent}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Gemini API key" Style="{StaticResource RowTitle}"/>
+                                <Label Text="{Binding MaskedApiKey}" Style="{StaticResource RowCaption}" LineBreakMode="MiddleTruncation"/>
+                            </VerticalStackLayout>
+                            <Button Grid.Column="2" Text="{Binding ApiKeyActionText}" Style="{StaticResource SmallTextButton}"
+                                    Command="{Binding ToggleApiKeyEditorCommand}" VerticalOptions="Center"/>
+                        </Grid>
+
+                        <!-- Inline key editor -->
+                        <VerticalStackLayout Spacing="8" Margin="0,12,0,0" IsVisible="{Binding IsApiKeyEditorOpen}">
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding ApiKeyInput}" Placeholder="Paste your Gemini API key" IsPassword="True"
+                                       IsSpellCheckEnabled="False" IsTextPredictionEnabled="False"/>
+                            </Border>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Button Grid.Column="0" Text="Save key" Style="{StaticResource SmallButton}" Command="{Binding SaveApiKeyCommand}"/>
+                                <Button Grid.Column="1" Text="Remove" Style="{StaticResource SmallOutlineButton}"
+                                        TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
+                                        Command="{Binding RemoveApiKeyCommand}" IsVisible="{Binding AiConfigured}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <Label Margin="56,8,0,0" Style="{StaticResource LinkText}" Text="Get a free key at aistudio.google.com"
+                               SemanticProperties.Description="Open Google AI Studio to create an API key">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAiStudioLinkTapped"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                        <BoxView Style="{StaticResource RowDivider}"/>
+
+                        <!-- Model row -->
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource AccentContainer}">
+                                <controls:TintedImage Source="ic_psychology.png" TintColor="{DynamicResource Accent}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                <Label Text="Model" Style="{StaticResource RowTitle}"/>
+                                <Border Style="{StaticResource InputBorder}" MinimumHeightRequest="44">
+                                    <Picker ItemsSource="{Binding AiModels}" SelectedItem="{Binding SelectedAiModel}" Title="Choose a model"
+                                            IsEnabled="{Binding AiConfigured}"/>
+                                </Border>
+                                <Label Text="Flash is fast and free-tier friendly; Pro reasons more carefully over long reports." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,12,0,0">
+                            <controls:TintedImage Source="ic_shield.png" WidthRequest="16" HeightRequest="16" VerticalOptions="Start" Margin="0,2,0,0" TintColor="{DynamicResource TextTertiary}"/>
+                            <Label Grid.Column="1" Style="{StaticResource RowCaption}"
+                                   Text="The key is kept in the device's secure storage and is only ever sent to Google's Gemini API, together with the health data needed to answer a question or read a scan."/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ Health report ============ -->
+                <controls:SectionHeaderView Title="Health report (PDF)"/>
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_picture_as_pdf.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Share a report with your doctor" Style="{StaticResource RowTitle}"/>
+                                <Label Text="Profile, medicines, dose history, lab results, vitals and visits in one PDF. Attaching files embeds your scanned reports and can make the PDF large." Style="{StaticResource RowCaption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsGeneratingReport}">
+                            <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="20" HeightRequest="20"/>
+                            <Label Text="Generating report..." Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0" Text="Summary" Command="{Binding GenerateReportCommand}"
+                                    IsEnabled="{Binding IsGeneratingReport, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Button Grid.Column="1" Text="With attached files" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding GenerateReportWithFilesCommand}"
+                                    IsEnabled="{Binding IsGeneratingReport, Converter={StaticResource InverseBoolConverter}}"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ Danger zone ============ -->
+                <controls:SectionHeaderView Title="Danger zone"/>
+                <Border Style="{StaticResource CardDanger}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource Surface}">
+                                <controls:TintedImage Source="ic_delete.png" TintColor="{DynamicResource Danger}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Delete all data" Style="{StaticResource RowTitle}" TextColor="{DynamicResource OnDangerContainer}"/>
+                                <Label Text="Permanently removes every medicine, dose log, metric, report, doctor visit and stored file. Cannot be undone." Style="{StaticResource RowCaption}" TextColor="{DynamicResource OnDangerContainer}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsDeleting}">
+                            <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="20" HeightRequest="20" Color="{DynamicResource Danger}"/>
+                            <Label Text="Deleting..." Style="{StaticResource Caption}" VerticalOptions="Center" TextColor="{DynamicResource OnDangerContainer}"/>
+                        </HorizontalStackLayout>
+                        <Button Text="Delete all data" Style="{StaticResource DangerButton}" Command="{Binding DeleteAllDataCommand}"
+                                IsEnabled="{Binding IsDeleting, Converter={StaticResource InverseBoolConverter}}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ============ About ============ -->
+                <controls:SectionHeaderView Title="About"/>
+                <Border Style="{StaticResource Card}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconCircle}">
+                            <controls:TintedImage Source="ic_info.png" TintColor="{DynamicResource Primary}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Chartwell" Style="{StaticResource RowTitle}"/>
+                            <Label Text="{Binding VersionText}" Style="{StaticResource RowCaption}"/>
+                            <Label Text="Offline-first · your data stays on this device" Style="{StaticResource RowCaption}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Me">
+    <ContentPage.Resources>
+        <!-- A tappable row in a menu card -->
+        <Style x:Key="MenuRow" TargetType="Grid">
+            <Setter Property="ColumnSpacing" Value="12"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="MinimumHeightRequest" Value="60"/>
+        </Style>
+        <Style x:Key="MenuIcon" TargetType="Border" BasedOn="{StaticResource IconCircle}">
+            <Setter Property="WidthRequest" Value="40"/>
+            <Setter Property="HeightRequest" Value="40"/>
+            <Setter Property="Padding" Value="9"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+        </Style>
+        <Style x:Key="StatTile" TargetType="Border" BasedOn="{StaticResource Card}">
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16,12,16,32" Spacing="12">
+
+                <!-- Identity -->
+                <Border Style="{StaticResource CardHero}" Margin="0">
+                    <VerticalStackLayout Spacing="14">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Border Grid.Column="0" Style="{StaticResource HeroChip}" WidthRequest="60" HeightRequest="60"
+                                    Padding="0" StrokeShape="RoundRectangle 20" VerticalOptions="Start">
+                                <Label Text="{Binding Initials}" Style="{StaticResource HeroTitle}" FontSize="22"
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                <Label Text="{Binding DisplayName}" Style="{StaticResource HeroTitle}" FontSize="22"
+                                       SemanticProperties.HeadingLevel="Level1"/>
+                                <Label Text="{Binding Tagline}" Style="{StaticResource HeroBody}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Border Style="{StaticResource HeroChip}" Padding="14,8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnEditProfileTapped"/>
+                            </Border.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="6">
+                                <controls:TintedImage Source="ic_edit.png" WidthRequest="16" HeightRequest="16" VerticalOptions="Center"
+                                                      TintColor="{DynamicResource OnHero}"/>
+                                <Label Text="{Binding EditButtonText}" Style="{StaticResource HeroChipText}"/>
+                            </HorizontalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                </Border>
+
+                <!-- Body -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                    <Border Grid.Column="0" Style="{StaticResource StatTile}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Height" Style="{StaticResource Caption}"/>
+                            <Label Text="{Binding HeightText}" Style="{StaticResource TitleSmall}" FontFamily="AppBold"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource StatTile}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Weight" Style="{StaticResource Caption}"/>
+                            <Label Text="{Binding WeightText}" Style="{StaticResource TitleSmall}" FontFamily="AppBold"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource StatTile}">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="BMI" Style="{StaticResource Caption}"/>
+                            <Label Text="{Binding BmiText}" Style="{StaticResource TitleSmall}" FontFamily="AppBold"/>
+                            <Label Text="{Binding BmiCategory}" Style="{StaticResource Caption}" IsVisible="{Binding HasBmi}"
+                                   LineBreakMode="TailTruncation"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Emergency details -->
+                <Border Style="{StaticResource CardDanger}" Margin="0" IsVisible="{Binding HasEmergencyInfo}">
+                    <VerticalStackLayout Spacing="10">
+                        <HorizontalStackLayout Spacing="8">
+                            <controls:TintedImage Source="ic_emergency.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Center"
+                                                  TintColor="{DynamicResource Danger}"/>
+                            <Label Text="In an emergency" Style="{StaticResource TitleSmall}" TextColor="{DynamicResource OnDangerContainer}"/>
+                        </HorizontalStackLayout>
+                        <VerticalStackLayout Spacing="2" IsVisible="{Binding HasAllergies}">
+                            <Label Text="Allergies" Style="{StaticResource Overline}" TextColor="{DynamicResource OnDangerContainer}"/>
+                            <Label Text="{Binding Allergies}" Style="{StaticResource Body}" TextColor="{DynamicResource OnDangerContainer}"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="2" IsVisible="{Binding HasConditions}">
+                            <Label Text="Conditions" Style="{StaticResource Overline}" TextColor="{DynamicResource OnDangerContainer}"/>
+                            <Label Text="{Binding Conditions}" Style="{StaticResource Body}" TextColor="{DynamicResource OnDangerContainer}"/>
+                        </VerticalStackLayout>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasEmergencyContact}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Emergency contact" Style="{StaticResource Overline}" TextColor="{DynamicResource OnDangerContainer}"/>
+                                <Label Text="{Binding EmergencyContact}" Style="{StaticResource Body}" TextColor="{DynamicResource OnDangerContainer}"/>
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Call" Style="{StaticResource DangerButton}" HeightRequest="40" Padding="18,0"
+                                    FontSize="13" Clicked="OnCallClicked" IsVisible="{Binding CanCall}" VerticalOptions="Center"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- What the app holds -->
+                <Label Text="Your records" Style="{StaticResource SectionHeader}" Margin="4,8,4,0"/>
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource StatTile}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnMedicinesTapped"/></Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_medication.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding MedicineCount}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                                <Label Text="Active medicines" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource StatTile}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnLabsTapped"/></Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_science.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding LabCount}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                                <Label Text="Lab tests tracked" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource StatTile}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnReportsTapped"/></Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_description.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding ReportCount}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                                <Label Text="Reports" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource StatTile}">
+                        <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnVisitsTapped"/></Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_stethoscope.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding VisitCount}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                                <Label Text="Doctor visits" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Shortcuts -->
+                <Label Text="More" Style="{StaticResource SectionHeader}" Margin="4,8,4,0"/>
+                <Border Style="{StaticResource Card}" Margin="0" Padding="0">
+                    <VerticalStackLayout>
+                        <Grid Style="{StaticResource MenuRow}" ColumnDefinitions="Auto,*,Auto">
+                            <Grid.GestureRecognizers><TapGestureRecognizer Tapped="OnMedicinesTapped"/></Grid.GestureRecognizers>
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_pill.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Medicines" Style="{StaticResource BodyStrong}"/>
+                                <Label Text="Schedules, stock and courses" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                        <BoxView Style="{StaticResource Divider}" Margin="66,0,0,0"/>
+                        <Grid Style="{StaticResource MenuRow}" ColumnDefinitions="Auto,*,Auto">
+                            <Grid.GestureRecognizers><TapGestureRecognizer Tapped="OnHistoryTapped"/></Grid.GestureRecognizers>
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_history.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Dose history" Style="{StaticResource BodyStrong}"/>
+                                <Label Text="Taken and missed doses, adherence" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                        <BoxView Style="{StaticResource Divider}" Margin="66,0,0,0"/>
+                        <Grid Style="{StaticResource MenuRow}" ColumnDefinitions="Auto,*,Auto">
+                            <Grid.GestureRecognizers><TapGestureRecognizer Tapped="OnAskAiTapped"/></Grid.GestureRecognizers>
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}" BackgroundColor="{DynamicResource AccentContainer}">
+                                <controls:TintedImage Source="ic_assistant.png" Aspect="AspectFit" TintColor="{DynamicResource Accent}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Ask the assistant" Style="{StaticResource BodyStrong}"/>
+                                <Label Text="Questions about your own records" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                        <BoxView Style="{StaticResource Divider}" Margin="66,0,0,0"/>
+                        <Grid Style="{StaticResource MenuRow}" ColumnDefinitions="Auto,*,Auto">
+                            <Grid.GestureRecognizers><TapGestureRecognizer Tapped="OnSettingsTapped"/></Grid.GestureRecognizers>
+                            <Border Grid.Column="0" Style="{StaticResource MenuIcon}">
+                                <controls:TintedImage Source="ic_settings.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Settings" Style="{StaticResource BodyStrong}"/>
+                                <Label Text="Backup, PDF export, PIN, theme, AI key" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

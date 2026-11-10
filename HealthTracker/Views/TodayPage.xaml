@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.TodayPage"
+             x:DataType="vm:TodayViewModel"
+             Title="Today">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Manage medicines" IconImageSource="{DynamicResource ToolbarIconMedication}" Clicked="OnManageMedicinesClicked" Order="Primary" Priority="0"/>
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*">
+        <RefreshView Grid.Row="0" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Groups}" IsGrouped="True">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,12,16,0" Spacing="12">
+                        <!-- Hero: greeting, date, progress, next dose -->
+                        <Border Style="{StaticResource CardHero}" Margin="0">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding TodayDate}" Style="{StaticResource HeroOverline}"/>
+                                <Label Text="{Binding Greeting}" Style="{StaticResource HeroTitle}"
+                                       SemanticProperties.HeadingLevel="Level1"/>
+                                <Label Text="{Binding SummaryText}" Style="{StaticResource HeroBody}"/>
+                                <ProgressBar Progress="{Binding DayProgress}" Style="{StaticResource ThickProgress}"
+                                             ProgressColor="{DynamicResource OnHero}" Margin="0,8,0,8" IsVisible="{Binding HasDoses}"
+                                             SemanticProperties.Description="{Binding SummaryText}"/>
+                                <Border Style="{StaticResource HeroChip}" IsVisible="{Binding HasNextDose}">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <controls:TintedImage Source="ic_alarm.png" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" TintColor="{DynamicResource OnHero}"/>
+                                        <Label Text="{Binding NextDoseText}" Style="{StaticResource HeroChipText}"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                        </Border>
+
+                        <!-- Quick actions -->
+                        <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource ActionTile}" SemanticProperties.Description="Record a vital sign">
+                                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnAddVitalTapped"/></Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Border Style="{StaticResource IconCircle}" WidthRequest="40" HeightRequest="40" Padding="9" HorizontalOptions="Center"
+                                            BackgroundColor="{DynamicResource DangerContainer}">
+                                        <controls:TintedImage Source="ic_monitor_heart.png" Aspect="AspectFit" TintColor="{DynamicResource MetricHeartRate}"/>
+                                    </Border>
+                                    <Label Text="Vitals" Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource ActionTile}" SemanticProperties.Description="Add lab results">
+                                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnAddLabTapped"/></Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Border Style="{StaticResource IconCircle}" WidthRequest="40" HeightRequest="40" Padding="9" HorizontalOptions="Center">
+                                        <controls:TintedImage Source="ic_science.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                                    </Border>
+                                    <Label Text="Lab result" Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource ActionTile}" SemanticProperties.Description="Scan a prescription">
+                                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnScanTapped"/></Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Border Style="{StaticResource IconCircle}" WidthRequest="40" HeightRequest="40" Padding="9" HorizontalOptions="Center"
+                                            BackgroundColor="{DynamicResource InfoContainer}">
+                                        <controls:TintedImage Source="ic_document_scanner.png" Aspect="AspectFit" TintColor="{DynamicResource Info}"/>
+                                    </Border>
+                                    <Label Text="Scan Rx" Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border Grid.Column="3" Style="{StaticResource ActionTile}" SemanticProperties.Description="Ask the assistant">
+                                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnAskAiTapped"/></Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Border Style="{StaticResource IconCircle}" WidthRequest="40" HeightRequest="40" Padding="9" HorizontalOptions="Center"
+                                            BackgroundColor="{DynamicResource AccentContainer}">
+                                        <controls:TintedImage Source="ic_assistant.png" Aspect="AspectFit" TintColor="{DynamicResource Accent}"/>
+                                    </Border>
+                                    <Label Text="Ask AI" Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <!-- Lab results outside their range -->
+                        <Border Style="{StaticResource CardWarning}" Margin="0" Padding="14" IsVisible="{Binding HasLabAttention}">
+                            <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnLabAttentionTapped"/></Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <controls:TintedImage Grid.Column="0" Source="ic_science.png" WidthRequest="24" HeightRequest="24"
+                                                      VerticalOptions="Center" TintColor="{DynamicResource Warning}"/>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding LabAttentionTitle}" Style="{StaticResource BodyStrong}" TextColor="{DynamicResource OnWarningContainer}"/>
+                                    <Label Text="{Binding LabAttentionDetail}" Style="{StaticResource Caption}" TextColor="{DynamicResource OnWarningContainer}"
+                                           MaxLines="2" LineBreakMode="TailTruncation"/>
+                                </VerticalStackLayout>
+                                <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                      VerticalOptions="Center" TintColor="{DynamicResource OnWarningContainer}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Next follow-up -->
+                        <Border Style="{StaticResource Card}" Margin="0" Padding="14" IsVisible="{Binding HasFollowUp}">
+                            <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnFollowUpTapped"/></Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Border Grid.Column="0" Style="{StaticResource IconCircle}" WidthRequest="40" HeightRequest="40" Padding="9">
+                                    <controls:TintedImage Source="ic_stethoscope.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding FollowUpTitle}" Style="{StaticResource BodyStrong}" LineBreakMode="TailTruncation"/>
+                                    <Label Text="{Binding FollowUpDetail}" Style="{StaticResource Caption}"/>
+                                </VerticalStackLayout>
+                                <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                      VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Empty state lives in the header: a CollectionView EmptyView is clipped to the space
+                             left under a tall header. -->
+                        <Border Style="{StaticResource Card}" Margin="0" Padding="20" IsVisible="{Binding IsEmpty}">
+                            <VerticalStackLayout Spacing="10">
+                                <Border Style="{StaticResource IconCircle}" HorizontalOptions="Center" WidthRequest="56" HeightRequest="56"
+                                        Padding="14" StrokeShape="RoundRectangle 18">
+                                    <controls:TintedImage Source="ic_medication.png" Aspect="AspectFit" TintColor="{DynamicResource Primary}"/>
+                                </Border>
+                                <Label Text="Nothing scheduled today" Style="{StaticResource TitleMedium}" HorizontalTextAlignment="Center"/>
+                                <Label Text="Add a medicine with a daily schedule and your doses will show up here."
+                                       Style="{StaticResource BodySecondary}" HorizontalTextAlignment="Center"/>
+                                <Button Text="Add medicine" Command="{Binding AddMedicineCommand}" Style="{StaticResource SecondaryButton}"
+                                        HorizontalOptions="Center" Margin="0,4,0,0"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="vm:TodayDoseGroup">
+                        <Grid ColumnDefinitions="*,Auto" Padding="20,12,20,6">
+                            <Label Grid.Column="0" Text="{Binding Title}" Style="{StaticResource SectionHeader}" Margin="0"/>
+                            <Border Grid.Column="1" Style="{StaticResource Chip}" Padding="8,2" VerticalOptions="Center">
+                                <Label Text="{Binding CountText}" Style="{StaticResource ChipText}"/>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:TodayScheduleItem">
+                        <Border Style="{StaticResource Card}" Margin="16,0,16,10" Padding="12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnDoseTapped" CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <!-- Icon circle: medicine icon, or a check once taken -->
+                                <Border Grid.Column="0" Style="{StaticResource IconCircle}">
+                                    <Grid>
+                                        <controls:TintedImage Source="{Binding StockUnitImage}" IsVisible="{Binding IsDone, Converter={StaticResource InverseBoolConverter}}"
+                                               SemanticProperties.Description="Medicine" TintColor="{DynamicResource Primary}"/>
+                                        <controls:TintedImage Source="ic_check_circle.png" IsVisible="{Binding IsDone}" SemanticProperties.Description="Taken" TintColor="{DynamicResource Success}"/>
+                                    </Grid>
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding MedicineName}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="{Binding ScheduleTimeDisplay}" Style="{StaticResource CaptionStrong}"/>
+                                        <Label Text="{Binding TimeUntilText}" Style="{StaticResource Caption}"
+                                               TextColor="{Binding StatusColor, Converter={StaticResource ThemeColorConverter}}"/>
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding Instructions}" Style="{StaticResource Caption}" LineBreakMode="TailTruncation" MaxLines="1"
+                                           IsVisible="{Binding HasInstructions}"/>
+                                    <HorizontalStackLayout Spacing="6" Margin="0,4,0,0">
+                                        <Border Style="{StaticResource ChipWarning}" IsVisible="{Binding IsOverdue}" Padding="8,2">
+                                            <Label Text="Overdue" Style="{StaticResource ChipTextWarning}"/>
+                                        </Border>
+                                        <Border Style="{StaticResource ChipDanger}" IsVisible="{Binding IsMissed}" Padding="8,2">
+                                            <Label Text="Missed" Style="{StaticResource ChipTextDanger}"/>
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding OutOfStockText}" Style="{StaticResource Caption}" TextColor="{DynamicResource Warning}"
+                                           IsVisible="{Binding ShowOutOfStockWarning}"/>
+                                </VerticalStackLayout>
+
+                                <!-- Trailing action: Take, spinner while logging, or a Taken chip -->
+                                <Grid Grid.Column="2" VerticalOptions="Center" MinimumWidthRequest="72">
+                                    <Button Text="Take" Style="{StaticResource SmallButton}" MinimumWidthRequest="72"
+                                            IsVisible="{Binding CanTake}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TodayViewModel}}, Path=TakeDoseCommand}"
+                                            CommandParameter="{Binding .}"
+                                            SemanticProperties.Description="{Binding MedicineName, StringFormat='Take {0} now'}"/>
+                                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" WidthRequest="24" HeightRequest="24"/>
+                                    <Border Style="{StaticResource ChipSuccess}" IsVisible="{Binding IsDone}" HorizontalOptions="End" VerticalOptions="Center">
+                                        <HorizontalStackLayout Spacing="4">
+                                            <controls:TintedImage Source="ic_check.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" TintColor="{DynamicResource OnSuccessContainer}"/>
+                                            <Label Text="Taken" Style="{StaticResource ChipTextSuccess}"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Grid.Row="0" Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"
+                           IsRunning="{Binding IsBusy}" VerticalOptions="Center"/>
+
+        <controls:TintedImageButton Grid.Row="0" Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddMedicineClicked"
+                     SemanticProperties.Description="Add medicine" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

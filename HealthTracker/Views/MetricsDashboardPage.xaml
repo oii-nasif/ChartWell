@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MetricsDashboardPage"
+             x:DataType="vm:MetricsDashboardViewModel"
+             Title="Vitals">
+
+    <Grid>
+        <!-- Side margin goes on the RefreshView: Android ignores Margin on a CollectionView inside a RefreshView. -->
+        <RefreshView Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
+                     Margin="16,12,16,0">
+            <CollectionView ItemsSource="{Binding Summaries}">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+                </CollectionView.ItemsLayout>
+
+                <!-- Everything above the vitals list lives in the header so there is a single scroll surface -->
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="12" Margin="0,0,0,2">
+                        <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                            <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                        </Border>
+
+                        <!-- This week: headline plus one dot per day, filled when something was recorded -->
+                        <Border Style="{StaticResource CardHero}" Margin="0" Padding="20,18">
+                            <VerticalStackLayout Spacing="14">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Last 7 days" Style="{StaticResource HeroOverline}"/>
+                                    <Label Text="{Binding WeekSummaryText}" Style="{StaticResource HeroTitle}" FontSize="22"
+                                           SemanticProperties.HeadingLevel="Level1"/>
+                                    <Label Text="{Binding WeekDetailText}" Style="{StaticResource HeroBody}"/>
+                                </VerticalStackLayout>
+
+                                <FlexLayout JustifyContent="SpaceBetween" AlignItems="Center" HeightRequest="36"
+                                            BindableLayout.ItemsSource="{Binding WeekDays}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:WeekDayDot">
+                                            <Border WidthRequest="34" HeightRequest="34" StrokeShape="RoundRectangle 17" StrokeThickness="0"
+                                                    BackgroundColor="{DynamicResource HeroChipFill}"
+                                                    SemanticProperties.Description="{Binding AccessibilityText}">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsLogged}" Value="True">
+                                                        <Setter Property="BackgroundColor" Value="{DynamicResource OnHero}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsToday}" Value="True">
+                                                        <Setter Property="Stroke" Value="{DynamicResource OnHero}"/>
+                                                        <Setter Property="StrokeThickness" Value="2"/>
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Label Text="{Binding Label}" Style="{StaticResource HeroChipText}" FontSize="12"
+                                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding IsLogged}" Value="True">
+                                                            <Setter Property="TextColor" Value="#0A5A50"/>
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </FlexLayout>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Soft, informational advisory (never a diagnosis) -->
+                        <Border Style="{StaticResource CardInfo}" Margin="0" Padding="14"
+                                IsVisible="{Binding ShowAdvisory}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <controls:TintedImage Grid.Column="0" Source="ic_info.png" WidthRequest="24" HeightRequest="24"
+                                       VerticalOptions="Start" Margin="0,2,0,0"
+                                       SemanticProperties.Description="Information" TintColor="{DynamicResource Info}"/>
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="Worth mentioning to your doctor" Style="{StaticResource BodyStrong}"
+                                           TextColor="{DynamicResource OnInfoContainer}"/>
+                                    <Label Text="{Binding AdvisoryText}" Style="{StaticResource Body}"
+                                           TextColor="{DynamicResource OnInfoContainer}"/>
+                                    <Label Text="General information only, not medical advice."
+                                           Style="{StaticResource Caption}"
+                                           TextColor="{DynamicResource OnInfoContainer}" Opacity="0.8"/>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+
+                        <!-- Body: BMI meter -->
+                        <Label Text="Body" Style="{StaticResource SectionHeader}" Margin="4,6,4,0"/>
+                        <Border Style="{StaticResource Card}" Margin="0" Padding="18,16">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnBmiCardTapped"/>
+                            </Border.GestureRecognizers>
+                            <VerticalStackLayout Spacing="6">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
+                                        <Label Text="Body mass index" Style="{StaticResource TitleSmall}"/>
+                                        <Label Text="{Binding BmiInputsText}" Style="{StaticResource Caption}" IsVisible="{Binding HasBmi}"/>
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="1" Style="{StaticResource Chip}" VerticalOptions="Center" IsVisible="{Binding HasBmi}"
+                                            BackgroundColor="{Binding BmiToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                        <Label Text="{Binding BmiCategory}" Style="{StaticResource ChipText}"
+                                               TextColor="{Binding BmiToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- The arc with the number sitting in its centre -->
+                                <Grid HeightRequest="150" Margin="0,6,0,0"
+                                      SemanticProperties.Description="{Binding BmiText, StringFormat='Body mass index {0}'}">
+                                    <controls:BmiGaugeView x:Name="BmiGauge" Bmi="{Binding Bmi}" HeightRequest="150"/>
+                                    <VerticalStackLayout VerticalOptions="End" HorizontalOptions="Center" Spacing="0">
+                                        <Label Text="{Binding BmiText}" Style="{StaticResource DisplayText}" FontSize="36"
+                                               HorizontalTextAlignment="Center"/>
+                                        <Label Text="kg/m²" Style="{StaticResource StatUnit}" HorizontalTextAlignment="Center"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <!-- Legend -->
+                                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6" Margin="0,8,0,0">
+                                    <HorizontalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
+                                        <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{DynamicResource Info}" VerticalOptions="Center"/>
+                                        <Label Text="Under" Style="{StaticResource Caption}"/>
+                                    </HorizontalStackLayout>
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
+                                        <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{DynamicResource Success}" VerticalOptions="Center"/>
+                                        <Label Text="Healthy" Style="{StaticResource Caption}"/>
+                                    </HorizontalStackLayout>
+                                    <HorizontalStackLayout Grid.Column="2" Spacing="5" HorizontalOptions="Center">
+                                        <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{DynamicResource Warning}" VerticalOptions="Center"/>
+                                        <Label Text="Over" Style="{StaticResource Caption}"/>
+                                    </HorizontalStackLayout>
+                                    <HorizontalStackLayout Grid.Column="3" Spacing="5" HorizontalOptions="Center">
+                                        <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Color="{DynamicResource Danger}" VerticalOptions="Center"/>
+                                        <Label Text="Obese" Style="{StaticResource Caption}"/>
+                                    </HorizontalStackLayout>
+                                </Grid>
+
+                                <!-- With a value -->
+                                <VerticalStackLayout Spacing="2" Margin="0,8,0,0" IsVisible="{Binding HasBmi}">
+                                    <Label Text="{Binding HealthyWeightText}" Style="{StaticResource BodyMedium}" HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+
+                                <!-- Without a value: what is missing -->
+                                <VerticalStackLayout Spacing="10" Margin="0,8,0,0" IsVisible="{Binding HasNoBmi}">
+                                    <Label Text="{Binding BmiPromptText}" Style="{StaticResource BodySecondary}" HorizontalTextAlignment="Center"/>
+                                    <Button Text="{Binding BmiActionText}" Style="{StaticResource SmallSecondaryButton}"
+                                            HorizontalOptions="Center" Clicked="OnBmiActionClicked"/>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Label Text="Readings" Style="{StaticResource SectionHeader}" Margin="4,6,4,2"/>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <!-- One full-width row per vital: identity and status on top, value and sparkline below -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MetricSummaryItem">
+                        <Grid>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMetricTapped" CommandParameter="{Binding .}"/>
+                            </Grid.GestureRecognizers>
+
+                            <Border Style="{StaticResource Card}" Margin="0" Padding="16,14" InputTransparent="True"
+                                    SemanticProperties.Description="{Binding DisplayName}">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Border Grid.Column="0" Style="{StaticResource IconCircle}" WidthRequest="42" HeightRequest="42" Padding="10"
+                                                StrokeShape="RoundRectangle 14" BackgroundColor="{DynamicResource SurfaceVariant}">
+                                            <controls:TintedImage Source="{Binding Icon}" Aspect="AspectFit"
+                                                                  TintColor="{Binding AccentToken, Converter={StaticResource ThemeColorConverter}}"/>
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                            <Label Text="{Binding DisplayName}" Style="{StaticResource BodyStrong}" LineBreakMode="TailTruncation"/>
+                                            <Label Text="{Binding LastRecordedText}" Style="{StaticResource Caption}" IsVisible="{Binding HasData}"/>
+                                            <Label Text="No readings yet" Style="{StaticResource Caption}" IsVisible="{Binding HasNoData}"/>
+                                        </VerticalStackLayout>
+                                        <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalOptions="Center" IsVisible="{Binding HasStatus}"
+                                                BackgroundColor="{Binding StatusToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                            <Label Text="{Binding StatusText}" Style="{StaticResource ChipText}"
+                                                   TextColor="{Binding StatusToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                                        </Border>
+                                        <Border Grid.Column="2" Style="{StaticResource ChipPrimary}" VerticalOptions="Center" Padding="12,6"
+                                                IsVisible="{Binding HasNoData}">
+                                            <HorizontalStackLayout Spacing="4">
+                                                <controls:TintedImage Source="ic_add.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center"
+                                                                      TintColor="{DynamicResource OnPrimaryContainer}"/>
+                                                <Label Text="Add" Style="{StaticResource ChipTextPrimary}"/>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </Grid>
+
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding HasData}">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="End">
+                                            <HorizontalStackLayout Spacing="5">
+                                                <Label Text="{Binding LatestValueText}" Style="{StaticResource StatValue}" FontSize="30"
+                                                       VerticalOptions="End"/>
+                                                <Label Text="{Binding Unit}" Style="{StaticResource StatUnit}" FontSize="13"
+                                                       VerticalOptions="End" Margin="0,0,0,6"/>
+                                            </HorizontalStackLayout>
+                                            <HorizontalStackLayout Spacing="4" IsVisible="{Binding HasTrend}">
+                                                <controls:TintedImage Source="{Binding TrendIcon}" WidthRequest="14" HeightRequest="14"
+                                                       VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                                                <Label Text="{Binding TrendText}" Style="{StaticResource Caption}" LineBreakMode="TailTruncation"/>
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
+                                        <controls:SparklineView Grid.Column="1" Values="{Binding Spark}" ColorToken="{Binding AccentToken}"
+                                                                WidthRequest="132" HeightRequest="52" VerticalOptions="End"
+                                                                IsVisible="{Binding HasSpark}"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="4,10,4,96">
+                        <Label Text="Status labels use general resting-adult ranges. They are a guide, not a diagnosis."
+                               Style="{StaticResource Caption}" TextColor="{DynamicResource TextTertiary}"/>
+                    </VerticalStackLayout>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding ShowLoading}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddClicked"
+                     SemanticProperties.Description="Add reading" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MedicineListPage"
+             x:DataType="vm:MedicineListViewModel"
+             Title="Medicines">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Scan prescription" IconImageSource="{DynamicResource ToolbarIconDocumentScanner}" Clicked="OnScanClicked" Order="Primary" Priority="0"/>
+    </ContentPage.ToolbarItems>
+
+    <ContentPage.Resources>
+        <!-- Promotion candidate: a SegmentButton style / SegmentedControl control. -->
+        <Style x:Key="SegmentButton" TargetType="Button" BasedOn="{StaticResource SmallTextButton}">
+            <Setter Property="TextColor" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="HorizontalOptions" Value="Fill"/>
+            <Setter Property="Padding" Value="8,0"/>
+        </Style>
+        <Style x:Key="TimeChipText" TargetType="Label" BasedOn="{StaticResource ChipTextPrimary}"/>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Segmented control -->
+        <Border Grid.Row="0" Style="{StaticResource CardFlat}" Padding="4" Margin="16,12,16,8" StrokeShape="RoundRectangle 999">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
+                <Button Grid.Column="0" Text="{Binding ActiveSegmentText}" Style="{StaticResource SegmentButton}"
+                        Command="{Binding SelectSegmentCommand}" CommandParameter="Active"
+                        SemanticProperties.Description="Show active medicines">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsActiveSegment}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
+                            <Setter Property="TextColor" Value="{DynamicResource OnPrimary}"/>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Grid.Column="1" Text="{Binding PastSegmentText}" Style="{StaticResource SegmentButton}"
+                        Command="{Binding SelectSegmentCommand}" CommandParameter="Past"
+                        SemanticProperties.Description="Show past medicines">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsPastSegment}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
+                            <Setter Property="TextColor" Value="{DynamicResource OnPrimary}"/>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                <Button Grid.Column="2" Text="{Binding PendingSegmentText}" Style="{StaticResource SegmentButton}"
+                        Command="{Binding SelectSegmentCommand}" CommandParameter="Pending"
+                        SemanticProperties.Description="Show scanned medicines pending review">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsPendingSegment}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
+                            <Setter Property="TextColor" Value="{DynamicResource OnPrimary}"/>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}" Margin="16,0,16,8">
+            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+        </Border>
+
+        <!-- ACTIVE -->
+        <RefreshView Grid.Row="2" IsVisible="{Binding IsActiveSegment}" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Medicines}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MedicineItem">
+                        <SwipeView Margin="16,0,16,10">
+                            <SwipeView.RightItems>
+                                <SwipeItems>
+                                    <SwipeItem Text="Delete" IconImageSource="{DynamicResource ToolbarIconDelete}"
+                                               Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=DeleteCommand}"
+                                               CommandParameter="{Binding .}"/>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+                            <Border Style="{StaticResource Card}" Margin="0">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMedicineTapped" CommandParameter="{Binding .}"/>
+                                    <DragGestureRecognizer
+                                        DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=DragStartedCommand}"
+                                        DragStartingCommandParameter="{Binding .}"/>
+                                    <DropGestureRecognizer
+                                        DropCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=DropCommand}"
+                                        DropCommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" Style="{StaticResource IconCircle}" VerticalOptions="Start">
+                                        <controls:TintedImage Source="{Binding StockUnitImage}" SemanticProperties.Description="Medicine" TintColor="{DynamicResource Primary}"/>
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                        <Label Text="{Binding Medicine.Name}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+
+                                        <!-- Schedule time chips -->
+                                        <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start" AlignItems="Center"
+                                                    BindableLayout.ItemsSource="{Binding ScheduleTimes}" IsVisible="{Binding HasScheduleTimes}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <Border Style="{StaticResource ChipPrimary}" Padding="8,2" Margin="0,0,6,6">
+                                                        <HorizontalStackLayout Spacing="4">
+                                                            <controls:TintedImage Source="ic_schedule.png" WidthRequest="12" HeightRequest="12" VerticalOptions="Center" TintColor="{DynamicResource OnPrimaryContainer}"/>
+                                                            <Label Text="{Binding .}" Style="{StaticResource TimeChipText}"/>
+                                                        </HorizontalStackLayout>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </FlexLayout>
+
+                                        <!-- Today progress -->
+                                        <VerticalStackLayout Spacing="4">
+                                            <ProgressBar Progress="{Binding DoseProgress}"
+                                                         ProgressColor="{Binding ProgressColor, Converter={StaticResource ThemeColorConverter}}"/>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <Label Grid.Column="0" Text="{Binding DoseProgressText}" Style="{StaticResource Caption}"/>
+                                                <Label Grid.Column="1" Text="{Binding CourseProgressText}" Style="{StaticResource Caption}"
+                                                       IsVisible="{Binding HasCourseProgress}"/>
+                                            </Grid>
+                                        </VerticalStackLayout>
+
+                                        <!-- Stock + adherence + streak/missed -->
+                                        <FlexLayout Wrap="Wrap" Direction="Row" AlignItems="Center">
+                                            <HorizontalStackLayout Spacing="4" Margin="0,0,10,4">
+                                                <controls:TintedImage Source="ic_inventory_2.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                                                <Label Text="{Binding StockText}" Style="{StaticResource Caption}"/>
+                                            </HorizontalStackLayout>
+                                            <Border Style="{StaticResource ChipWarning}" Padding="8,2" Margin="0,0,10,4" IsVisible="{Binding IsLowStock}"
+                                                    BackgroundColor="{Binding StockWarningColor, Converter={StaticResource ThemeColorConverter}}">
+                                                <Label Text="{Binding StockChipText}" Style="{StaticResource ChipText}" TextColor="{DynamicResource TextInverse}"/>
+                                            </Border>
+                                            <Label Text="{Binding AdherenceText}" Style="{StaticResource Caption}" Margin="0,0,10,4" IsVisible="{Binding HasAdherence}"/>
+                                            <Label Text="{Binding StreakText}" Style="{StaticResource CaptionStrong}" TextColor="{DynamicResource Success}"
+                                                   Margin="0,0,10,4" IsVisible="{Binding ShowStreak}"/>
+                                            <Label Text="{Binding MissedText}" Style="{StaticResource CaptionStrong}" TextColor="{DynamicResource Danger}"
+                                                   Margin="0,0,0,4" IsVisible="{Binding ShowMissed}"/>
+                                        </FlexLayout>
+                                    </VerticalStackLayout>
+
+                                    <controls:TintedImage Grid.Column="2" Source="ic_drag_handle.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center"
+                                           SemanticProperties.Description="Drag to reorder" TintColor="{DynamicResource TextTertiary}"/>
+                                </Grid>
+                            </Border>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <!-- Hidden until the first load completes so the empty state doesn't flash. BindingContext is set in code-behind. -->
+                    <Grid x:Name="EmptyStateActive" IsVisible="{Binding IsActiveEmpty}">
+                        <controls:EmptyStateView Icon="ic_medication.png"
+                                                 Title="No active medicines"
+                                                 Message="Add a medicine by hand or scan a prescription to get started."
+                                                 ActionText="Add medicine"
+                                                 ActionCommand="{Binding AddMedicineCommand}"/>
+                    </Grid>
+                </CollectionView.EmptyView>
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- PAST -->
+        <RefreshView Grid.Row="2" IsVisible="{Binding IsPastSegment}" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding PastMedicines}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MedicineItem">
+                        <SwipeView Margin="16,0,16,10">
+                            <SwipeView.RightItems>
+                                <SwipeItems>
+                                    <SwipeItem Text="Delete" IconImageSource="{DynamicResource ToolbarIconDelete}"
+                                               Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=DeleteCommand}"
+                                               CommandParameter="{Binding .}"/>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+                            <Border Style="{StaticResource CardFlat}" Margin="0" Opacity="0.85">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMedicineTapped" CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource Surface}">
+                                        <controls:TintedImage Source="{Binding StockUnitImage}" SemanticProperties.Description="Medicine" TintColor="{DynamicResource TextTertiary}"/>
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding Medicine.Name}" Style="{StaticResource TitleSmall}" TextColor="{DynamicResource TextSecondary}" LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding PastSummaryText}" Style="{StaticResource Caption}"/>
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="2" Style="{StaticResource ChipSuccess}" VerticalOptions="Center">
+                                        <Label Text="Completed" Style="{StaticResource ChipTextSuccess}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Grid x:Name="EmptyStatePast" IsVisible="{Binding IsPastEmpty}">
+                        <controls:EmptyStateView Icon="ic_history.png"
+                                                 Title="No past medicines"
+                                                 Message="Finished courses and stopped medicines will be listed here."/>
+                    </Grid>
+                </CollectionView.EmptyView>
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- PENDING REVIEW -->
+        <RefreshView Grid.Row="2" IsVisible="{Binding IsPendingSegment}" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding PendingMedicines}">
+                <CollectionView.Header>
+                    <Label Text="Scanned from a prescription. Approve to turn an entry into a real medicine with reminders."
+                           Style="{StaticResource Caption}" Padding="16,0,16,10"/>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PendingMedicineItem">
+                        <Border Style="{StaticResource CardWarning}" Margin="16,0,16,10">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="12">
+                                <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource Surface}">
+                                    <controls:TintedImage Source="ic_pending_actions.png" SemanticProperties.Description="Pending review" TintColor="{DynamicResource Warning}"/>
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Name}" Style="{StaticResource TitleSmall}"/>
+                                    <Label Text="{Binding DetailText}" Style="{StaticResource BodySecondary}" IsVisible="{Binding HasDetail}"/>
+                                    <Label Text="{Binding ScannedText}" Style="{StaticResource Caption}"/>
+                                </VerticalStackLayout>
+                                <HorizontalStackLayout Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Spacing="8" HorizontalOptions="End">
+                                    <Button Text="Dismiss" Style="{StaticResource SmallOutlineButton}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=DismissPendingCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    <Button Text="Approve" Style="{StaticResource SmallButton}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineListViewModel}}, Path=ApprovePendingCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Grid x:Name="EmptyStatePending" IsVisible="{Binding IsPendingEmpty}">
+                        <controls:EmptyStateView Icon="ic_document_scanner.png"
+                                                 Title="Nothing to review"
+                                                 Message="Scan a prescription and the medicines it lists will wait here for your approval."
+                                                 ActionText="Scan prescription"
+                                                 ActionCommand="{Binding ScanPrescriptionCommand}"/>
+                    </Grid>
+                </CollectionView.EmptyView>
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Grid.Row="2" Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Grid.Row="0" Grid.RowSpan="3" Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddClicked"
+                     SemanticProperties.Description="Add medicine" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

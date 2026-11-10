@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             xmlns:views="clr-namespace:HealthTracker.Views"
+             x:Class="HealthTracker.Views.AskAiPage"
+             x:DataType="vm:AskAiViewModel"
+             Title="Ask AI"
+             BackgroundColor="{DynamicResource Background}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Clear conversation" Order="Secondary" Command="{Binding ClearCommand}"/>
+    </ContentPage.ToolbarItems>
+
+    <ContentPage.Resources>
+        <!-- Promotion candidates: ChatBubbleUser / ChatBubbleAssistant / SuggestionChip -->
+        <Style x:Key="ChatBubbleUser" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+            <Setter Property="StrokeThickness" Value="0"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 18,18,4,18"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="HorizontalOptions" Value="End"/>
+            <Setter Property="MaximumWidthRequest" Value="300"/>
+        </Style>
+        <Style x:Key="ChatBubbleAssistant" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{DynamicResource Surface}"/>
+            <Setter Property="Stroke" Value="{DynamicResource Outline}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 4,18,18,18"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="HorizontalOptions" Value="Start"/>
+        </Style>
+        <Style x:Key="AssistantAvatar" TargetType="Border" BasedOn="{StaticResource IconCircle}">
+            <Setter Property="BackgroundColor" Value="{DynamicResource AccentContainer}"/>
+            <Setter Property="WidthRequest" Value="32"/>
+            <Setter Property="HeightRequest" Value="32"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 16"/>
+            <Setter Property="Padding" Value="7"/>
+            <Setter Property="VerticalOptions" Value="End"/>
+        </Style>
+        <Style x:Key="TypingDot" TargetType="BoxView">
+            <Setter Property="WidthRequest" Value="8"/>
+            <Setter Property="HeightRequest" Value="8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Color" Value="{DynamicResource TextTertiary}"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+        </Style>
+
+        <!-- User bubble -->
+        <DataTemplate x:Key="UserMessageTemplate" x:DataType="vm:ChatMessage">
+            <Grid Padding="56,4,16,4">
+                <Border Style="{StaticResource ChatBubbleUser}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnBubbleDoubleTapped" CommandParameter="{Binding Text}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding Text}" Style="{StaticResource Body}" TextColor="{DynamicResource OnPrimaryContainer}" LineBreakMode="WordWrap"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Assistant bubble -->
+        <DataTemplate x:Key="AssistantMessageTemplate" x:DataType="vm:ChatMessage">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="16,4,40,4">
+                <Border Style="{StaticResource AssistantAvatar}">
+                    <controls:TintedImage Source="ic_assistant.png" SemanticProperties.Description="Assistant" TintColor="{DynamicResource Accent}"/>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource ChatBubbleAssistant}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnBubbleDoubleTapped" CommandParameter="{Binding Text}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding Text}" Style="{StaticResource Body}" LineBreakMode="WordWrap"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Error row: message plus the fix for its kind -->
+        <DataTemplate x:Key="ErrorMessageTemplate" x:DataType="vm:ChatMessage">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="16,4,24,4">
+                <Border Style="{StaticResource AssistantAvatar}" BackgroundColor="{DynamicResource WarningContainer}">
+                    <controls:TintedImage Source="ic_warning.png" SemanticProperties.Description="Problem" TintColor="{DynamicResource Warning}"/>
+                </Border>
+                <Grid Grid.Column="1">
+                    <!-- No key: accent card with a shortcut to Settings -->
+                    <Border Style="{StaticResource CardAccent}" Margin="0" IsVisible="{Binding IsNoApiKey}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Add a Gemini key to use the assistant" Style="{StaticResource BodyStrong}" TextColor="{DynamicResource OnAccentContainer}"/>
+                            <Label Text="The assistant answers from your own medicines, lab results, vitals, reports and visits using Google Gemini. A free key takes a minute to create." Style="{StaticResource Caption}" TextColor="{DynamicResource OnAccentContainer}"/>
+                            <Button Text="Add Gemini key" Style="{StaticResource AccentButton}" HorizontalOptions="Start"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AskAiViewModel}}, Path=OpenSettingsCommand}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <!-- Network: retry -->
+                    <Border Style="{StaticResource CardWarning}" Margin="0" IsVisible="{Binding CanRetry}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="{Binding Text}" Style="{StaticResource Body}" TextColor="{DynamicResource OnWarningContainer}"/>
+                            <Button Text="Retry" Style="{StaticResource SmallOutlineButton}" HorizontalOptions="Start"
+                                    TextColor="{DynamicResource OnWarningContainer}" BorderColor="{DynamicResource OnWarningContainer}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AskAiViewModel}}, Path=RetryCommand}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <!-- Anything else: plain message -->
+                    <Border Style="{StaticResource ChatBubbleAssistant}" IsVisible="{Binding IsPlainError}">
+                        <Label Text="{Binding Text}" Style="{StaticResource Body}" TextColor="{DynamicResource TextSecondary}" LineBreakMode="WordWrap"/>
+                    </Border>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <views:AiMessageTemplateSelector x:Key="MessageTemplateSelector"
+                                         UserTemplate="{StaticResource UserMessageTemplate}"
+                                         AssistantTemplate="{StaticResource AssistantMessageTemplate}"
+                                         ErrorTemplate="{StaticResource ErrorMessageTemplate}"/>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto,Auto">
+
+        <!-- Conversation -->
+        <CollectionView x:Name="MessagesView" Grid.Row="0"
+                        ItemsSource="{Binding Messages}"
+                        ItemTemplate="{StaticResource MessageTemplateSelector}"
+                        ItemsUpdatingScrollMode="KeepLastItemInView"
+                        SelectionMode="None"
+                        Margin="0,8,0,0">
+            <CollectionView.EmptyView>
+                <ScrollView>
+                    <VerticalStackLayout Spacing="12" Padding="{StaticResource PagePadding}" VerticalOptions="Center">
+                        <Border Style="{StaticResource IconCircleLarge}" BackgroundColor="{DynamicResource AccentContainer}" HorizontalOptions="Center">
+                            <controls:TintedImage Source="ic_assistant.png" Aspect="AspectFit" SemanticProperties.Description="AI assistant" TintColor="{DynamicResource Accent}"/>
+                        </Border>
+                        <Label Text="Ask about your health data" Style="{StaticResource TitleMedium}" HorizontalTextAlignment="Center"
+                               SemanticProperties.HeadingLevel="Level1"/>
+                        <Label Text="The assistant reads your medicines, dose history, lab results, vitals, reports and visits on this device and answers in plain language."
+                               Style="{StaticResource BodySecondary}" HorizontalTextAlignment="Center"/>
+                        <Label Text="Try one of these" Style="{StaticResource Overline}" HorizontalTextAlignment="Center" Margin="0,12,0,0"/>
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding SuggestedQuestions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Border Style="{StaticResource ChipAccent}" HorizontalOptions="Center" Padding="16,10" MinimumHeightRequest="44">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AskAiViewModel}}, Path=SuggestCommand}"
+                                                                  CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding .}" Style="{StaticResource ChipTextAccent}" FontSize="14"/>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Typing indicator -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="8" Padding="16,4,16,8" IsVisible="{Binding IsBusy}">
+            <Border Style="{StaticResource AssistantAvatar}">
+                <controls:TintedImage Source="ic_assistant.png" TintColor="{DynamicResource Accent}"/>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource ChatBubbleAssistant}" Padding="16,12"
+                    SemanticProperties.Description="Assistant is typing">
+                <HorizontalStackLayout Spacing="5">
+                    <BoxView x:Name="Dot1" Style="{StaticResource TypingDot}"/>
+                    <BoxView x:Name="Dot2" Style="{StaticResource TypingDot}"/>
+                    <BoxView x:Name="Dot3" Style="{StaticResource TypingDot}"/>
+                </HorizontalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- Input bar -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="12,8,12,12"
+              BackgroundColor="{DynamicResource Surface}">
+            <Border Grid.Column="0" Style="{StaticResource InputBorder}" StrokeShape="RoundRectangle 26" MinimumHeightRequest="48" Padding="16,0">
+                <Entry Placeholder="Ask about your health data"
+                       Text="{Binding InputText}"
+                       ReturnType="Send"
+                       ReturnCommand="{Binding SendCommand}"
+                       IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+            </Border>
+            <controls:TintedImageButton Grid.Column="1" Source="ic_send.png" Style="{StaticResource IconButton}"
+                         WidthRequest="48" HeightRequest="48" CornerRadius="24" Padding="12"
+                         BackgroundColor="{DynamicResource Primary}" TintColor="{DynamicResource OnPrimary}"
+                         Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}"
+                         SemanticProperties.Description="Send question">
+                <ImageButton.Triggers>
+                    <Trigger TargetType="ImageButton" Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.45"/>
+                    </Trigger>
+                </ImageButton.Triggers>
+            </controls:TintedImageButton>
+        </Grid>
+    </Grid>
+</ContentPage>

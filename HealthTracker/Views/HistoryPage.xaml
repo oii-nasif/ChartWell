@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             xmlns:views="clr-namespace:HealthTracker.Views"
+             x:Class="HealthTracker.Views.HistoryPage"
+             x:DataType="vm:HistoryViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{DynamicResource Background}">
+    <ContentPage.Resources>
+        <!-- Promotion candidates: SegmentChip(+Text) (also in SettingsPage), PresetChip -->
+        <Style x:Key="SegmentChip" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="Stroke" Value="{DynamicResource OutlineStrong}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 999"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinimumHeightRequest" Value="44"/>
+        </Style>
+        <Style x:Key="SegmentChipText" TargetType="Label">
+            <Setter Property="FontFamily" Value="AppSemibold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextColor" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+        </Style>
+        <Style x:Key="PresetChip" TargetType="Border" BasedOn="{StaticResource Chip}">
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="MinimumHeightRequest" Value="36"/>
+            <Setter Property="HorizontalOptions" Value="Fill"/>
+        </Style>
+
+        <!-- Medicine card: name + total, then one progress row per course -->
+        <DataTemplate x:Key="MedicineTemplate" x:DataType="vm:MedicineHistoryGroup">
+            <Grid Padding="16,0,16,0">
+                <Border Style="{StaticResource Card}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnMedicineTapped" CommandParameter="{Binding .}"/>
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Style="{StaticResource IconCircle}">
+                                <controls:TintedImage Source="ic_medication.png" TintColor="{DynamicResource Primary}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding HeaderText}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding DosesText}" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                        <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Courses}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CourseSummaryRow">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding DateRange}" Style="{StaticResource CaptionStrong}"/>
+                                        <Label Text="{Binding SummaryLine}" Style="{StaticResource BodySecondary}"/>
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                            <ProgressBar Grid.Column="0" Progress="{Binding Progress}" VerticalOptions="Center"
+                                                         ProgressColor="{Binding ProgressToken, Converter={StaticResource ThemeColorConverter}}"/>
+                                            <Label Grid.Column="1" Text="{Binding ProgressText}" Style="{StaticResource CaptionStrong}"
+                                                   TextColor="{Binding ProgressToken, Converter={StaticResource ThemeColorConverter}}" VerticalOptions="Center"/>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Doctor visit row -->
+        <DataTemplate x:Key="DoctorTemplate" x:DataType="vm:DoctorHistoryItem">
+            <Grid Padding="16,0,16,0">
+                <Border Style="{StaticResource Card}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnDoctorTapped" CommandParameter="{Binding .}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource InfoContainer}">
+                            <controls:TintedImage Source="ic_medical_services.png" TintColor="{DynamicResource Info}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding DoctorName}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding SubText}" Style="{StaticResource Caption}" IsVisible="{Binding HasSubText}"/>
+                            <Label Text="{Binding Diagnosis}" Style="{StaticResource BodySecondary}" IsVisible="{Binding HasDiagnosis}"
+                                   LineBreakMode="TailTruncation" MaxLines="2"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2" Text="{Binding VisitDateDisplay}" Style="{StaticResource Caption}" VerticalOptions="Start"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Report row -->
+        <DataTemplate x:Key="ReportTemplate" x:DataType="vm:ReportHistoryItem">
+            <Grid Padding="16,0,16,0">
+                <Border Style="{StaticResource Card}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnReportTapped" CommandParameter="{Binding .}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource AccentContainer}">
+                            <controls:TintedImage Source="{Binding Icon}" TintColor="{DynamicResource Accent}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding Title}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding SubText}" Style="{StaticResource Caption}"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2" Text="{Binding ReportDateDisplay}" Style="{StaticResource Caption}" VerticalOptions="Start"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <views:HistoryItemTemplateSelector x:Key="HistoryTemplateSelector"
+                                           MedicineTemplate="{StaticResource MedicineTemplate}"
+                                           DoctorTemplate="{StaticResource DoctorTemplate}"
+                                           ReportTemplate="{StaticResource ReportTemplate}"/>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Filters -->
+        <VerticalStackLayout Grid.Row="0" Spacing="12" Padding="16,12,16,4">
+            <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+            </Border>
+
+            <!-- Category segments -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                <Border Grid.Column="0" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Show medicine history">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsMedicine}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                            <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetCategoryCommand}" CommandParameter="Medicine"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="Medicines" Style="{StaticResource SegmentChipText}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsMedicine}" Value="True">
+                                <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Show doctor visits">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsDoctor}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                            <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetCategoryCommand}" CommandParameter="Doctor"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="Doctors" Style="{StaticResource SegmentChipText}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsDoctor}" Value="True">
+                                <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource SegmentChip}" SemanticProperties.Description="Show reports">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsReports}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                            <Setter Property="Stroke" Value="{DynamicResource PrimaryContainer}"/>
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SetCategoryCommand}" CommandParameter="Reports"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="Reports" Style="{StaticResource SegmentChipText}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsReports}" Value="True">
+                                <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+            </Grid>
+
+            <!-- Date range -->
+            <Border Style="{StaticResource Card}" Padding="12" Margin="0">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="From" Style="{StaticResource FieldLabel}" Margin="4,0,0,0"/>
+                            <Border Style="{StaticResource InputBorder}" MinimumHeightRequest="44" Padding="8,0">
+                                <DatePicker Date="{Binding FromDate}" MaximumDate="{Binding MaxDate}" Format="dd MMM yyyy" FontSize="14"
+                                            SemanticProperties.Description="Start date"/>
+                            </Border>
+                        </VerticalStackLayout>
+                        <controls:TintedImage Grid.Column="1" Source="ic_arrow_forward.png" WidthRequest="18" HeightRequest="18" VerticalOptions="End" Margin="0,0,0,13" TintColor="{DynamicResource TextTertiary}"/>
+                        <VerticalStackLayout Grid.Column="2" Spacing="4">
+                            <Label Text="To" Style="{StaticResource FieldLabel}" Margin="4,0,0,0"/>
+                            <Border Style="{StaticResource InputBorder}" MinimumHeightRequest="44" Padding="8,0">
+                                <DatePicker Date="{Binding ToDate}" MaximumDate="{Binding MaxDate}" Format="dd MMM yyyy" FontSize="14"
+                                            SemanticProperties.Description="End date"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Presets -->
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+                        <Border Grid.Column="0" Style="{StaticResource PresetChip}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ActivePreset}" Value="7d">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetPresetCommand}" CommandParameter="7d"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="7d" Style="{StaticResource ChipText}" HorizontalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ActivePreset}" Value="7d">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource PresetChip}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ActivePreset}" Value="30d">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetPresetCommand}" CommandParameter="30d"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="30d" Style="{StaticResource ChipText}" HorizontalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ActivePreset}" Value="30d">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource PresetChip}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ActivePreset}" Value="90d">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetPresetCommand}" CommandParameter="90d"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="90d" Style="{StaticResource ChipText}" HorizontalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ActivePreset}" Value="90d">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="3" Style="{StaticResource PresetChip}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ActivePreset}" Value="year">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetPresetCommand}" CommandParameter="year"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="This year" Style="{StaticResource ChipText}" HorizontalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ActivePreset}" Value="year">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+
+                    <Button Text="Search" Style="{StaticResource SmallSecondaryButton}" Command="{Binding SearchCommand}"
+                            IsEnabled="{Binding IsNotBusy}"/>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- Results: one list, template chosen per item type -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Items}"
+                        ItemTemplate="{StaticResource HistoryTemplateSelector}"
+                        SelectionMode="None" Margin="0,8,0,0">
+            <CollectionView.Footer>
+                <BoxView HeightRequest="24" Color="Transparent"/>
+            </CollectionView.Footer>
+            <CollectionView.EmptyView>
+                <!-- BindingContext is set in code-behind; EmptyView does not reliably inherit the page's. -->
+                <Grid x:Name="EmptyState">
+                    <controls:EmptyStateView Icon="{Binding EmptyIcon}" Title="{Binding EmptyTitle}" Message="{Binding EmptyMessage}"
+                                             IsVisible="{Binding IsEmpty}"/>
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding IsBusy}">
+                        <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="28" HeightRequest="28"/>
+                        <Label Text="Searching..." Style="{StaticResource BodySecondary}" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Grid>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

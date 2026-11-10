@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="HealthTracker.Views.DoctorVisitFormPage"
+             Title="{Binding PageTitle}">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="16" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                    <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                </Border>
+
+                <!-- Edit mode: scanning is collapsed behind "Rescan prescription" -->
+                <Button Text="Rescan prescription" Style="{StaticResource OutlineButton}"
+                        Command="{Binding RescanCommand}" IsVisible="{Binding ShowRescanButton}"/>
+
+                <!-- Scan prescription -->
+                <Border Style="{StaticResource CardAccent}" IsVisible="{Binding ShowScanCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <controls:TintedImage Grid.Column="0" Source="ic_document_scanner.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource OnAccentContainer}"/>
+                            <Label Grid.Column="1" Text="Scan prescription" Style="{StaticResource TitleSmall}"
+                                   TextColor="{DynamicResource OnAccentContainer}" VerticalOptions="Center"/>
+                        </Grid>
+                        <Label Text="Take a photo or pick an image of the prescription. The visit details and medicines are filled in for you."
+                               Style="{StaticResource Caption}" TextColor="{DynamicResource OnAccentContainer}"/>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0" Text="Take photo" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding CaptureImageCommand}"
+                                    IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Button Grid.Column="1" Text="Choose image" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding PickImageCommand}"
+                                    IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolConverter}}"/>
+                        </Grid>
+
+                        <!-- OCR / AI progress row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" IsVisible="{Binding ShowProgressRow}">
+                            <ActivityIndicator Grid.Column="0" WidthRequest="20" HeightRequest="20" VerticalOptions="Center"
+                                               Color="{DynamicResource OnAccentContainer}"
+                                               IsRunning="{Binding IsScanning}" IsVisible="{Binding IsScanning}"/>
+                            <Label Grid.Column="1" Text="{Binding ScanStatus}" Style="{StaticResource Caption}"
+                                   TextColor="{DynamicResource OnAccentContainer}" VerticalOptions="Center"/>
+                            <Border Grid.Column="2" Style="{StaticResource Chip}" BackgroundColor="{DynamicResource Surface}"
+                                    VerticalOptions="Center">
+                                <Label Text="{Binding ScanModeLabel}" Style="{StaticResource ChipText}"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Prescription thumbnail -->
+                        <Grid IsVisible="{Binding HasImage}">
+                            <Border StrokeShape="RoundRectangle 12" StrokeThickness="0" HeightRequest="180"
+                                    BackgroundColor="{DynamicResource SurfaceVariant}" Padding="0">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnImageTapped"/>
+                                </Border.GestureRecognizers>
+                                <Image Source="{Binding PrescriptionThumbnail}" Aspect="AspectFill"
+                                       SemanticProperties.Description="Prescription image, tap to open"/>
+                            </Border>
+                            <controls:TintedImageButton Source="ic_close.png" Style="{StaticResource IconButton}"
+                                         BackgroundColor="{DynamicResource Surface}" CornerRadius="22"
+                                         HorizontalOptions="End" VerticalOptions="Start" Margin="8"
+                                         Command="{Binding RemoveImageCommand}" SemanticProperties.Description="Remove prescription image" TintColor="{DynamicResource Danger}"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- AI unavailable notice -->
+                <Border Style="{StaticResource CardInfo}" IsVisible="{Binding HasAiNotice}" Padding="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto">
+                        <controls:TintedImage Grid.Row="0" Grid.Column="0" Source="ic_info.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Start" TintColor="{DynamicResource OnInfoContainer}"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding AiNoticeText}" Style="{StaticResource Caption}"
+                               TextColor="{DynamicResource OnInfoContainer}"/>
+                        <Button Grid.Row="1" Grid.Column="1" Text="Open Settings" Style="{StaticResource SmallTextButton}"
+                                HorizontalOptions="Start" Margin="-10,0,0,0" Command="{Binding OpenSettingsCommand}"
+                                IsVisible="{Binding ShowSettingsAction}"/>
+                    </Grid>
+                </Border>
+
+                <!-- AI filled banner -->
+                <Border Style="{StaticResource CardAccent}" IsVisible="{Binding ShowAiBanner}" Padding="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <controls:TintedImage Grid.Column="0" Source="ic_auto_awesome.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource OnAccentContainer}"/>
+                        <Label Grid.Column="1" Text="AI filled these fields — please check them before saving."
+                               Style="{StaticResource BodyStrong}" TextColor="{DynamicResource OnAccentContainer}" VerticalOptions="Center"/>
+                        <controls:TintedImageButton Grid.Column="2" Source="ic_close.png" Style="{StaticResource IconButton}"
+                                     Command="{Binding DismissBannerCommand}" SemanticProperties.Description="Dismiss" TintColor="{DynamicResource OnAccentContainer}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Doctor -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Doctor" Style="{StaticResource TitleSmall}"/>
+
+                        <VerticalStackLayout>
+                            <Label Text="Doctor's name" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding DoctorName}" Placeholder="e.g. Dr. Rahman"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Hospital or clinic (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding Hospital}" Placeholder="e.g. City Hospital"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Visit date" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <DatePicker Date="{Binding VisitDate}" Format="dd MMM yyyy"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Visit -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Visit" Style="{StaticResource TitleSmall}"/>
+
+                        <VerticalStackLayout>
+                            <Label Text="Diagnosis (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorderMultiline}">
+                                <Editor Text="{Binding Diagnosis}" Placeholder="What did the doctor find?"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Notes (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorderMultiline}">
+                                <Editor Text="{Binding Notes}" Placeholder="Advice, tests ordered, anything to remember"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Follow-up -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Follow-up" Style="{StaticResource TitleSmall}"/>
+                                <Label Text="Set a date for the next appointment" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding HasFollowUp}" VerticalOptions="Center"
+                                    SemanticProperties.Description="Set a follow-up date"/>
+                        </Grid>
+
+                        <VerticalStackLayout IsVisible="{Binding HasFollowUp}">
+                            <Label Text="Follow-up date" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <DatePicker Date="{Binding FollowUpDate}" MinimumDate="{Binding FollowUpMinDate}" Format="dd MMM yyyy"/>
+                            </Border>
+                            <Label Text="You'll get a reminder the evening before and the morning of." Style="{StaticResource FieldHint}"/>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Medicines on this prescription -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding HasMedicines}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Medicines on this prescription" Style="{StaticResource TitleSmall}"/>
+                        <Label Text="Read by AI. Send them to Pending review to check and add each one to your medicines."
+                               Style="{StaticResource Caption}"/>
+
+                        <VerticalStackLayout Spacing="0" BindableLayout.ItemsSource="{Binding Medicines}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="0,8" MinimumHeightRequest="44">
+                                        <controls:TintedImage Grid.Column="0" Source="ic_medication.png" WidthRequest="22" HeightRequest="22" VerticalOptions="Center" TintColor="{DynamicResource Primary}"/>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}"/>
+                                            <Label Text="{Binding Detail}" Style="{StaticResource Caption}" IsVisible="{Binding HasDetail}"/>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Button Text="{Binding AddToPendingText}" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding AddToPendingCommand}" IsEnabled="{Binding CanSendMedicines}"/>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="16,8,16,16" BackgroundColor="{DynamicResource Surface}">
+            <Button Text="{Binding SaveButtonText}" Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+        </Grid>
+
+        <ActivityIndicator Grid.Row="0" Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+    </Grid>
+</ContentPage>

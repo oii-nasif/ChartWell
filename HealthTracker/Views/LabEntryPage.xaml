@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.LabEntryPage"
+             x:DataType="vm:LabEntryViewModel"
+             Title="{Binding PageTitle}">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="12" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                </Border>
+
+                <!-- Values read from a report -->
+                <Border Style="{StaticResource CardAccent}" Margin="0" Padding="14" IsVisible="{Binding HasImportNote}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <controls:TintedImage Grid.Column="0" Source="ic_auto_awesome.png" WidthRequest="20" HeightRequest="20"
+                                              VerticalOptions="Start" TintColor="{DynamicResource Accent}"/>
+                        <Label Grid.Column="1" Text="{Binding ImportNote}" Style="{StaticResource Body}"
+                               TextColor="{DynamicResource OnAccentContainer}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Sample -->
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="12">
+                        <VerticalStackLayout>
+                            <Label Text="Sample collected on" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <DatePicker Date="{Binding CollectedDate}" MaximumDate="{Binding MaxDate}" Format="dd MMM yyyy"/>
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Laboratory (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding LabName}" Placeholder="Where the test was done" MaxLength="80"
+                                       Keyboard="Text" ReturnType="Done"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Add tests: whole panels or search -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsAddMode}">
+                    <Label Text="Add a panel" Style="{StaticResource SectionHeader}" Margin="4,6,4,0"/>
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="-16,0">
+                        <HorizontalStackLayout Spacing="8" Padding="16,0" BindableLayout.ItemsSource="{Binding Panels}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LabPanelChip">
+                                    <Border Style="{StaticResource Chip}" Padding="12,9" BackgroundColor="{DynamicResource Surface}"
+                                            Stroke="{DynamicResource Outline}" StrokeThickness="1"
+                                            SemanticProperties.Description="{Binding Name, StringFormat='Add the {0} panel'}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LabEntryViewModel}}, Path=AddPanelCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout Spacing="6">
+                                            <controls:TintedImage Source="{Binding Icon}" WidthRequest="18" HeightRequest="18" VerticalOptions="Center"
+                                                                  TintColor="{Binding ColorToken, Converter={StaticResource ThemeColorConverter}}"/>
+                                            <Label Text="{Binding Name}" Style="{StaticResource ChipText}" TextColor="{DynamicResource TextPrimary}"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <Border Style="{StaticResource InputBorder}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <controls:TintedImage Grid.Column="0" Source="ic_search.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                            <Entry Grid.Column="1" Text="{Binding SearchText}" Placeholder="Or search a test: creatinine, SGPT, HBsAg"
+                                   Keyboard="Text" ReturnType="Search" ClearButtonVisibility="WhileEditing" IsSpellCheckEnabled="False"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="0" Padding="4" IsVisible="{Binding ShowCustomOption}">
+                        <VerticalStackLayout>
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding SearchResults}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LabSearchItem">
+                                        <Grid ColumnDefinitions="*,Auto" Padding="12,10" ColumnSpacing="8" MinimumHeightRequest="48">
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LabEntryViewModel}}, Path=AddSearchItemCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Grid.GestureRecognizers>
+                                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                                <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}"/>
+                                                <Label Text="{Binding PanelName}" Style="{StaticResource Caption}"/>
+                                            </VerticalStackLayout>
+                                            <controls:TintedImage Grid.Column="1" Source="ic_add.png" WidthRequest="20" HeightRequest="20"
+                                                                  VerticalOptions="Center" TintColor="{DynamicResource Primary}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,Auto" Padding="12,10" ColumnSpacing="8" MinimumHeightRequest="48">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding AddCustomCommand}"/>
+                                </Grid.GestureRecognizers>
+                                <Label Grid.Column="0" Text="{Binding CustomOptionText}" Style="{StaticResource LinkText}" VerticalOptions="Center"/>
+                                <controls:TintedImage Grid.Column="1" Source="ic_biotech.png" WidthRequest="20" HeightRequest="20"
+                                                      VerticalOptions="Center" TintColor="{DynamicResource Primary}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Border Style="{StaticResource CardFlat}" Margin="0" IsVisible="{Binding ShowEmptyHint}">
+                    <Label Text="Pick a panel to get every test in it, or search for a single test. Fill in only the values on your report; empty rows are not saved."
+                           Style="{StaticResource BodySecondary}"/>
+                </Border>
+
+                <!-- One card per test -->
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Rows}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LabEntryRow">
+                            <Border Style="{StaticResource Card}" Margin="0" Padding="14,12">
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                        <Label Grid.Column="0" Text="{Binding Name}" Style="{StaticResource TitleSmall}" VerticalOptions="Center"/>
+                                        <Border Grid.Column="1" Style="{StaticResource Chip}" Padding="8,2" VerticalOptions="Center" IsVisible="{Binding HasFlag}"
+                                                BackgroundColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                            <Label Text="{Binding FlagText}" Style="{StaticResource ChipText}"
+                                                   TextColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                                        </Border>
+                                        <controls:TintedImageButton Grid.Column="2" Source="ic_close.png" Style="{StaticResource IconButton}"
+                                                                    WidthRequest="36" HeightRequest="36" Padding="8" Margin="0,-6,-8,-6"
+                                                                    TintColor="{DynamicResource TextTertiary}"
+                                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:LabEntryViewModel}}, Path=IsAddMode}"
+                                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LabEntryViewModel}}, Path=RemoveRowCommand}"
+                                                                    CommandParameter="{Binding .}"
+                                                                    SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}"/>
+                                    </Grid>
+
+                                    <!-- Number + unit -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding IsNumeric}">
+                                        <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                            <Entry Text="{Binding ValueInput}" Placeholder="Result" Keyboard="Numeric" MaxLength="12"
+                                                   SemanticProperties.Description="{Binding Name, StringFormat='{0} result'}"/>
+                                        </Border>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" MinimumWidthRequest="112"
+                                                IsVisible="{Binding HasUnitChoice}">
+                                            <Picker ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" Title="Unit"/>
+                                        </Border>
+                                        <Label Grid.Column="1" Text="{Binding SelectedUnit}" Style="{StaticResource BodySecondary}"
+                                               VerticalOptions="Center" Margin="4,0,4,0" IsVisible="{Binding HasFixedUnit}"/>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}" WidthRequest="112"
+                                                IsVisible="{Binding ShowCustomUnit}">
+                                            <Entry Text="{Binding CustomUnit}" Placeholder="Unit" MaxLength="16" IsSpellCheckEnabled="False"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Word result -->
+                                    <Border Style="{StaticResource InputBorder}" IsVisible="{Binding IsQualitative}">
+                                        <Picker ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}" Title="{Binding Name}"/>
+                                    </Border>
+
+                                    <Label Text="{Binding RangeHint}" Style="{StaticResource Caption}"/>
+
+                                    <!-- Printed range override (numbers only) -->
+                                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsNumeric}">
+                                        <Label Text="{Binding RangeToggleText}" Style="{StaticResource LinkText}" FontSize="13">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding ToggleRangeCommand}"/>
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsRangeEditorOpen}">
+                                            <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                                <Entry Text="{Binding RefLowInput}" Placeholder="Lowest normal" Keyboard="Numeric" MaxLength="12"/>
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource InputBorder}">
+                                                <Entry Text="{Binding RefHighInput}" Placeholder="Highest normal" Keyboard="Numeric" MaxLength="12"/>
+                                            </Border>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="Delete this result" Style="{StaticResource DangerOutlineButton}" Command="{Binding DeleteCommand}"
+                        IsVisible="{Binding IsEditMode}" Margin="0,8,0,0"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="16,8,16,16" BackgroundColor="{DynamicResource Background}">
+            <Button Text="{Binding SaveButtonText}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}"/>
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" WidthRequest="24" HeightRequest="24"
+                               HorizontalOptions="End" Margin="0,0,16,0" Color="{DynamicResource OnPrimary}"/>
+        </Grid>
+    </Grid>
+</ContentPage>

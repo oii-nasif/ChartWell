@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>HealthTracker.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
+  </ItemGroup>
+
+  <!-- Constants (no MAUI deps) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Constants\AppConstants.cs" Link="Constants\AppConstants.cs" />
+    <Compile Include="..\HealthTracker\Constants\MetricTypes.cs" Link="Constants\MetricTypes.cs" />
+  </ItemGroup>
+
+  <!-- Lab results (catalog, models, repositories, pure logic, service) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Constants\LabCatalog.cs" Link="Constants\LabCatalog.cs" />
+    <Compile Include="..\HealthTracker\Models\LabResult.cs" Link="Models\LabResult.cs" />
+    <Compile Include="..\HealthTracker\Models\UserProfile.cs" Link="Models\UserProfile.cs" />
+    <Compile Include="..\HealthTracker\Repositories\LabResultRepository.cs" Link="Repositories\LabResultRepository.cs" />
+    <Compile Include="..\HealthTracker\Repositories\UserProfileRepository.cs" Link="Repositories\UserProfileRepository.cs" />
+    <Compile Include="..\HealthTracker\Services\LabService.cs" Link="Services\LabService.cs" />
+    <Compile Include="..\HealthTracker\Services\Labs\LabEvaluator.cs" Link="Services\Labs\LabEvaluator.cs" />
+    <Compile Include="..\HealthTracker\Services\Labs\LabCalculator.cs" Link="Services\Labs\LabCalculator.cs" />
+    <Compile Include="..\HealthTracker\Services\Labs\LabFindingParser.cs" Link="Services\Labs\LabFindingParser.cs" />
+  </ItemGroup>
+
+  <!-- Models (SQLite attributes only) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Models\Medicine.cs" Link="Models\Medicine.cs" />
+    <Compile Include="..\HealthTracker\Models\MedicineSchedule.cs" Link="Models\MedicineSchedule.cs" />
+    <Compile Include="..\HealthTracker\Models\MedicineLog.cs" Link="Models\MedicineLog.cs" />
+    <Compile Include="..\HealthTracker\Models\MedicineCourse.cs" Link="Models\MedicineCourse.cs" />
+    <Compile Include="..\HealthTracker\Models\HealthMetric.cs" Link="Models\HealthMetric.cs" />
+    <Compile Include="..\HealthTracker\Models\MedicalReport.cs" Link="Models\MedicalReport.cs" />
+    <Compile Include="..\HealthTracker\Models\DoctorVisit.cs" Link="Models\DoctorVisit.cs" />
+    <Compile Include="..\HealthTracker\Models\TimelineEntry.cs" Link="Models\TimelineEntry.cs" />
+    <Compile Include="..\HealthTracker\Models\ReportPage.cs" Link="Models\ReportPage.cs" />
+    <Compile Include="..\HealthTracker\Models\PendingMedicine.cs" Link="Models\PendingMedicine.cs" />
+  </ItemGroup>
+
+  <!-- Helpers (no MAUI deps) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Helpers\DateTimeHelper.cs" Link="Helpers\DateTimeHelper.cs" />
+    <Compile Include="..\HealthTracker\Helpers\ValidationHelper.cs" Link="Helpers\ValidationHelper.cs" />
+    <Compile Include="..\HealthTracker\Helpers\StoredPathHelper.cs" Link="Helpers\StoredPathHelper.cs" />
+    <Compile Include="..\HealthTracker\Helpers\StockUnitIcons.cs" Link="Helpers\StockUnitIcons.cs" />
+  </ItemGroup>
+
+  <!-- ViewModels (no MAUI deps) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\ViewModels\BaseViewModel.cs" Link="ViewModels\BaseViewModel.cs" />
+    <Compile Include="..\HealthTracker\ViewModels\MedicineIcons.cs" Link="ViewModels\MedicineIcons.cs" />
+    <Compile Include="..\HealthTracker\ViewModels\MedicineItem.cs" Link="ViewModels\MedicineItem.cs" />
+    <Compile Include="..\HealthTracker\ViewModels\TodayScheduleItem.cs" Link="ViewModels\TodayScheduleItem.cs" />
+  </ItemGroup>
+
+  <!-- Repositories -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Repositories\BaseRepository.cs" Link="Repositories\BaseRepository.cs" />
+    <Compile Include="..\HealthTracker\Repositories\MedicineRepository.cs" Link="Repositories\MedicineRepository.cs" />
+    <Compile Include="..\HealthTracker\Repositories\MedicineScheduleRepository.cs" Link="Repositories\MedicineScheduleRepository.cs" />
+    <Compile Include="..\HealthTracker\Repositories\MedicineLogRepository.cs" Link="Repositories\MedicineLogRepository.cs" />
+    <Compile Include="..\HealthTracker\Repositories\MedicineCourseRepository.cs" Link="Repositories\MedicineCourseRepository.cs" />
+  </ItemGroup>
+
+  <!-- Services (no MAUI deps) -->
+  <ItemGroup>
+    <Compile Include="..\HealthTracker\Services\IReminderService.cs" Link="Services\IReminderService.cs" />
+    <Compile Include="..\HealthTracker\Services\MedicineService.cs" Link="Services\MedicineService.cs" />
+    <Compile Include="..\HealthTracker\Services\DatabaseMigrator.cs" Link="Services\DatabaseMigrator.cs" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:HealthTracker.Helpers"
+             x:Class="HealthTracker.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- The colour theme dictionary (Resources/Themes/*) is merged at runtime by ThemeService. -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <helpers:NotNullConverter x:Key="NotNullConverter"/>
+            <helpers:NullConverter x:Key="NullConverter"/>
+            <helpers:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <helpers:TakenIconConverter x:Key="TakenIconConverter"/>
+            <helpers:PinStatusConverter x:Key="PinStatusConverter"/>
+            <helpers:IsPdfConverter x:Key="IsPdfConverter"/>
+            <helpers:HexColorConverter x:Key="HexColorConverter"/>
+            <helpers:ThemeColorConverter x:Key="ThemeColorConverter"/>
+            <helpers:IntToBoolConverter x:Key="IntToBoolConverter"/>
+            <helpers:CountToBoolConverter x:Key="CountToBoolConverter"/>
+            <helpers:StringNotEmptyConverter x:Key="StringNotEmptyConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

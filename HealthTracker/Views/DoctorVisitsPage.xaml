@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             x:Class="HealthTracker.Views.DoctorVisitsPage"
+             Title="Doctor visits">
+
+    <Grid>
+        <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding GroupedVisits}" IsGrouped="True">
+
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,8,16,0" Spacing="0">
+                        <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}" Margin="0,0,0,8">
+                            <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                        </Border>
+
+                        <VerticalStackLayout IsVisible="{Binding HasUpcomingFollowUps}" Spacing="0">
+                            <controls:SectionHeaderView Title="Upcoming follow-ups"/>
+                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding UpcomingFollowUps}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource CardInfo}" Padding="12" Margin="0">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnFollowUpTapped" CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                <controls:TintedImage Grid.Column="0" Source="ic_event.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource OnInfoContainer}"/>
+                                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                    <Label Text="{Binding Headline}" Style="{StaticResource BodyStrong}"
+                                                           TextColor="{DynamicResource OnInfoContainer}" LineBreakMode="TailTruncation" MaxLines="1"/>
+                                                    <Label Text="{Binding Detail}" Style="{StaticResource Caption}"
+                                                           TextColor="{DynamicResource OnInfoContainer}" Opacity="0.8"/>
+                                                </VerticalStackLayout>
+                                                <Border Grid.Column="2" Style="{StaticResource ChipPrimary}" VerticalOptions="Center">
+                                                    <Label Text="{Binding CountdownText}" Style="{StaticResource ChipTextPrimary}"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                            <controls:SectionHeaderView Title="All visits" Margin="0,8,0,0"/>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding Title}" Style="{StaticResource Overline}" Margin="20,16,20,6"/>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <SwipeView>
+                            <SwipeView.RightItems>
+                                <SwipeItems Mode="Reveal">
+                                    <SwipeItem Text="Delete" IconImageSource="{DynamicResource ToolbarIconDelete}" Invoked="OnDeleteInvoked"/>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+
+                            <Border Style="{StaticResource Card}" Margin="16,6" Padding="12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnVisitTapped" CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" Style="{StaticResource IconCircle}" VerticalOptions="Start">
+                                        <controls:TintedImage Source="ic_person.png" Aspect="AspectFit" TintColor="{DynamicResource OnPrimaryContainer}"/>
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Label Grid.Column="0" Text="{Binding DoctorName}" Style="{StaticResource TitleSmall}"
+                                                   LineBreakMode="TailTruncation" MaxLines="1"/>
+                                            <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                                        </Grid>
+                                        <Label Text="{Binding Hospital}" Style="{StaticResource Caption}" IsVisible="{Binding HasHospital}"
+                                               LineBreakMode="TailTruncation" MaxLines="1"/>
+                                        <Label Text="{Binding DiagnosisPreview}" Style="{StaticResource Body}" IsVisible="{Binding HasDiagnosis}"
+                                               LineBreakMode="TailTruncation" MaxLines="1"/>
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Border Style="{StaticResource Chip}" Padding="8,2" IsVisible="{Binding HasPrescription}">
+                                                <HorizontalStackLayout Spacing="4">
+                                                    <controls:TintedImage Source="ic_attach_file.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" TintColor="{DynamicResource TextSecondary}"/>
+                                                    <Label Text="Prescription" Style="{StaticResource ChipText}"/>
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                            <Border Style="{StaticResource ChipPrimary}" Padding="8,2" IsVisible="{Binding IsFollowUpUpcoming}">
+                                                <Label Text="{Binding FollowUpText}" Style="{StaticResource ChipTextPrimary}"/>
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+
+                                    <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                                </Grid>
+                            </Border>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+
+                <CollectionView.EmptyView>
+                    <!-- Hidden until the first load completes so the empty state doesn't flash. BindingContext is set in code-behind. -->
+                    <Grid x:Name="EmptyState" IsVisible="{Binding IsEmpty}">
+                        <controls:EmptyStateView Icon="ic_medical_services.png"
+                                                 Title="No doctor visits yet"
+                                                 Message="Record a visit to keep diagnoses, prescriptions and follow-ups in one place."
+                                                 ActionText="Add visit"
+                                                 ActionCommand="{Binding AddCommand}"/>
+                    </Grid>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Command="{Binding AddCommand}"
+                     SemanticProperties.Description="Add doctor visit" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

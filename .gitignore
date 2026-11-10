@@ -1,0 +1,28 @@
+# Build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.binlog
+
+# Local scratch
+*.pyc
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Test and coverage output
+TestResults/
+*.trx
+coverage*.xml
+
+# Android build artefacts and signing material (never commit a keystore)
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Local scratch screenshots (published ones live in docs/screenshots/)
+/screenshot_*.png

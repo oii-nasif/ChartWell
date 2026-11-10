@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.PinLockPage"
+             x:DataType="vm:PinLockViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{DynamicResource Background}">
+    <ContentPage.Resources>
+        <!-- 16px indicator dot; filled state is toggled by the DataTrigger below. -->
+        <Style x:Key="PinDot" TargetType="Border">
+            <Setter Property="WidthRequest" Value="16"/>
+            <Setter Property="HeightRequest" Value="16"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 8"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+            <Setter Property="Stroke" Value="{DynamicResource OutlineStrong}"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto,Auto,*,Auto,Auto" Padding="24,32,24,24">
+
+        <!-- App mark + headline -->
+        <VerticalStackLayout Grid.Row="1" Spacing="16" HorizontalOptions="Center">
+            <Border Style="{StaticResource IconCircleLarge}" HorizontalOptions="Center"
+                    BackgroundColor="{DynamicResource Primary}">
+                <controls:TintedImage Source="ic_lock.png" Aspect="AspectFit" SemanticProperties.Description="Chartwell is locked" TintColor="{DynamicResource OnPrimary}"/>
+            </Border>
+            <Label Text="Chartwell" Style="{StaticResource TitleLarge}" HorizontalTextAlignment="Center"
+                   SemanticProperties.HeadingLevel="Level1"/>
+            <Label Text="{Binding Prompt}" Style="{StaticResource BodySecondary}" HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Dots + feedback -->
+        <VerticalStackLayout Grid.Row="2" Spacing="16" Margin="0,28,0,0" HorizontalOptions="Center">
+            <HorizontalStackLayout x:Name="DotsRow" Spacing="18" HorizontalOptions="Center"
+                                   BindableLayout.ItemsSource="{Binding Dots}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PinDotItem">
+                        <Border Style="{StaticResource PinDot}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFilled}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+
+            <!-- Fixed-height slot so the keypad doesn't jump when a message appears -->
+            <Grid HeightRequest="40">
+                <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"
+                       HorizontalTextAlignment="Center" VerticalOptions="Center"
+                       IsVisible="{Binding HasError}"/>
+                <Label Text="{Binding CooldownText}" Style="{StaticResource CaptionStrong}"
+                       TextColor="{DynamicResource Warning}" HorizontalTextAlignment="Center" VerticalOptions="Center"
+                       IsVisible="{Binding IsCoolingDown}"/>
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Keypad -->
+        <controls:PinPadView Grid.Row="4" HorizontalOptions="Center"
+                             DigitCommand="{Binding DigitCommand}"
+                             BackspaceCommand="{Binding BackspaceCommand}"
+                             BiometricCommand="{Binding BiometricCommand}"
+                             ShowBiometric="{Binding ShowBiometric}"
+                             IsKeypadEnabled="{Binding IsKeypadEnabled}"/>
+
+        <!-- Reset path -->
+        <Grid Grid.Row="5" Margin="0,16,0,0">
+            <Button Text="Forgot PIN?" Style="{StaticResource TextButton}" HorizontalOptions="Center"
+                    Clicked="OnForgotPinClicked"
+                    IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" IsVisible="{Binding IsBusy}">
+                <ActivityIndicator Style="{StaticResource LoadingIndicator}" WidthRequest="24" HeightRequest="24"/>
+                <Label Text="Erasing app data..." Style="{StaticResource Caption}" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

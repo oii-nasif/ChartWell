@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.ProfileFormPage"
+             x:DataType="vm:ProfileFormViewModel"
+             Title="Health profile">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="12" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                </Border>
+
+                <Label Text="Everything here is optional and stays on this device (and in your own backups)."
+                       Style="{StaticResource BodySecondary}" Margin="4,0"/>
+
+                <Label Text="About you" Style="{StaticResource SectionHeader}" Margin="4,6,4,0"/>
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="14">
+                        <VerticalStackLayout>
+                            <Label Text="Name" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding FullName}" Placeholder="Your name" MaxLength="80" Keyboard="Text"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Sex" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding SexOptions}" SelectedItem="{Binding SelectedSex}" Title="Sex"/>
+                            </Border>
+                            <Label Text="Several lab tests (hemoglobin, creatinine, HDL, liver enzymes) have different normal ranges for men and women."
+                                   Style="{StaticResource FieldHint}"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="Date of birth" Style="{StaticResource FieldLabel}" VerticalOptions="Center" Margin="4,0,0,0"/>
+                                <Switch Grid.Column="1" IsToggled="{Binding HasDateOfBirth}" VerticalOptions="Center"
+                                        SemanticProperties.Description="Record my date of birth"/>
+                            </Grid>
+                            <Border Style="{StaticResource InputBorder}" IsVisible="{Binding HasDateOfBirth}">
+                                <DatePicker Date="{Binding DateOfBirth}" MaximumDate="{Binding MaxDateOfBirth}"
+                                            MinimumDate="{Binding MinDateOfBirth}" Format="dd MMM yyyy"/>
+                            </Border>
+                            <Label Text="Used with sex and creatinine to estimate kidney function (eGFR)." Style="{StaticResource FieldHint}"/>
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Blood group" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Picker ItemsSource="{Binding BloodGroupOptions}" SelectedItem="{Binding SelectedBloodGroup}" Title="Blood group"/>
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="Height (cm)" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry Text="{Binding HeightInput}" Placeholder="e.g. 170" Keyboard="Numeric" MaxLength="6"/>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="Medical details" Style="{StaticResource SectionHeader}" Margin="4,6,4,0"/>
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="14">
+                        <VerticalStackLayout>
+                            <Label Text="Allergies" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorderMultiline}">
+                                <Editor Text="{Binding Allergies}" Placeholder="Medicines, foods or anything else you react to" MaxLength="400"/>
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Long-term conditions" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorderMultiline}">
+                                <Editor Text="{Binding Conditions}" Placeholder="e.g. Type 2 diabetes, hypertension" MaxLength="400"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="Emergency contact" Style="{StaticResource SectionHeader}" Margin="4,6,4,0"/>
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="14">
+                        <VerticalStackLayout>
+                            <Label Text="Name" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding EmergencyName}" Placeholder="Who to call" MaxLength="80" Keyboard="Text"/>
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Phone" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding EmergencyPhone}" Placeholder="Phone number" MaxLength="24" Keyboard="Telephone"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="16,8,16,16" BackgroundColor="{DynamicResource Background}">
+            <Button Text="Save profile" Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+        </Grid>
+    </Grid>
+</ContentPage>

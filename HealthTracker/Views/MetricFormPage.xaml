@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MetricFormPage"
+             x:DataType="vm:MetricFormViewModel"
+             Title="{Binding PageTitle}">
+
+    <ContentPage.Resources>
+        <!-- Promotion candidate: selectable chip with icon, 44 tall -->
+        <Style x:Key="SelectChip" TargetType="Border" BasedOn="{StaticResource Chip}">
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="MinimumHeightRequest" Value="44"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="Stroke" Value="{DynamicResource Outline}"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="16" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}" Margin="0">
+                    <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                </Border>
+
+                <!-- Type: chip row (add) -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsAddMode}">
+                    <Label Text="What are you recording?" Style="{StaticResource FieldLabel}"/>
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="-16,0">
+                        <HorizontalStackLayout Spacing="8" Padding="16,2"
+                                               BindableLayout.ItemsSource="{Binding TypeOptions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MetricTypeOption">
+                                    <Border Style="{StaticResource SelectChip}"
+                                            SemanticProperties.Description="{Binding DisplayName}">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                                <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnTypeChipTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout Spacing="6">
+                                            <controls:TintedImage Source="{Binding Icon}" WidthRequest="18" HeightRequest="18" VerticalOptions="Center" TintColor="{Binding Token, Converter={StaticResource ThemeColorConverter}}"/>
+                                            <Label Text="{Binding DisplayName}" Style="{StaticResource ChipText}">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+                </VerticalStackLayout>
+
+                <!-- Type: locked header (edit) -->
+                <Border Style="{StaticResource CardFlat}" Margin="0" Padding="14" IsVisible="{Binding IsEditMode}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Border Grid.Column="0" Style="{StaticResource IconCircle}"
+                                BackgroundColor="{DynamicResource Surface}">
+                            <controls:TintedImage Source="{Binding TypeIcon}" Aspect="AspectFit" TintColor="{Binding TypeToken, Converter={StaticResource ThemeColorConverter}}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding TypeDisplayName}" Style="{StaticResource TitleSmall}"/>
+                            <Label Text="The type can't be changed for an existing reading" Style="{StaticResource Caption}"/>
+                        </VerticalStackLayout>
+                        <controls:TintedImage Grid.Column="2" Source="ic_lock.png" WidthRequest="20" HeightRequest="20"
+                               VerticalOptions="Center" SemanticProperties.Description="Type locked" TintColor="{DynamicResource TextTertiary}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Reading -->
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Reading" Style="{StaticResource FieldLabel}"/>
+
+                        <!-- Single value with inline unit -->
+                        <Border Style="{StaticResource InputBorder}" IsVisible="{Binding IsSingleValue}">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Entry Grid.Column="0" Text="{Binding ValueText}" Keyboard="Numeric"
+                                       Placeholder="{Binding ValuePlaceholder}" IsEnabled="{Binding HasType}"
+                                       SemanticProperties.Description="Value"/>
+                                <Label Grid.Column="1" Text="{Binding UnitOrPlaceholder}" Style="{StaticResource BodySecondary}"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Blood pressure: systolic / diastolic -->
+                        <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8" IsVisible="{Binding IsBloodPressure}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry Text="{Binding ValueText}" Keyboard="Numeric" Placeholder="120"
+                                           SemanticProperties.Description="Systolic"/>
+                                </Border>
+                                <Label Text="Systolic" Style="{StaticResource Caption}" Margin="4,0,0,0"/>
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="/" Style="{StaticResource TitleLarge}"
+                                   TextColor="{DynamicResource TextTertiary}" VerticalOptions="Start" Margin="0,10,0,0"/>
+                            <VerticalStackLayout Grid.Column="2" Spacing="4">
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <Entry Grid.Column="0" Text="{Binding SecondValueText}" Keyboard="Numeric" Placeholder="80"
+                                               SemanticProperties.Description="Diastolic"/>
+                                        <Label Grid.Column="1" Text="mmHg" Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                                    </Grid>
+                                </Border>
+                                <Label Text="Diastolic" Style="{StaticResource Caption}" Margin="4,0,0,0"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <HorizontalStackLayout Spacing="6" Margin="0,2,0,0">
+                            <controls:TintedImage Source="ic_info.png" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" Margin="4,4,0,0" TintColor="{DynamicResource TextTertiary}"/>
+                            <Label Text="{Binding RangeHint}" Style="{StaticResource FieldHint}" Margin="0,4,0,0"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- When -->
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="When" Style="{StaticResource FieldLabel}"/>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Border Grid.Column="0" Style="{StaticResource InputBorder}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <controls:TintedImage Grid.Column="0" Source="ic_calendar_month.png" WidthRequest="20" HeightRequest="20"
+                                           VerticalOptions="Center" SemanticProperties.Description="Date" TintColor="{DynamicResource TextSecondary}"/>
+                                    <DatePicker Grid.Column="1" Date="{Binding RecordedDate}" MaximumDate="{Binding MaxDate}"
+                                                Format="dd MMM yyyy"/>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource InputBorder}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <controls:TintedImage Grid.Column="0" Source="ic_schedule.png" WidthRequest="20" HeightRequest="20"
+                                           VerticalOptions="Center" SemanticProperties.Description="Time" TintColor="{DynamicResource TextSecondary}"/>
+                                    <TimePicker Grid.Column="1" Time="{Binding RecordedTime}" Format="HH:mm"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Notes -->
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Notes (optional)" Style="{StaticResource FieldLabel}"/>
+                        <Border Style="{StaticResource InputBorderMultiline}">
+                            <Editor Text="{Binding Notes}" Placeholder="e.g. after breakfast, felt light-headed"
+                                    SemanticProperties.Description="Notes"/>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Pinned save -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto" BackgroundColor="{DynamicResource Surface}">
+            <BoxView Grid.Row="0" Style="{StaticResource Divider}"/>
+            <Grid Grid.Row="1" Padding="16,12,16,16" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Button Grid.Column="0" Text="{Binding SaveButtonText}" Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+                <ActivityIndicator Grid.Column="1" Style="{StaticResource LoadingIndicator}"
+                                   WidthRequest="28" HeightRequest="28" IsVisible="{Binding IsBusy}"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

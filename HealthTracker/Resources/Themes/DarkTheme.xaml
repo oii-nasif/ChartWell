@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<!-- Chartwell semantic colour tokens, dark variant. Keys must mirror LightTheme.xaml exactly. -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="HealthTracker.Resources.Themes.DarkTheme">
+
+    <!-- Surfaces -->
+    <Color x:Key="Background">#0B1412</Color>
+    <Color x:Key="Surface">#131F1C</Color>
+    <Color x:Key="SurfaceVariant">#1C2B27</Color>
+    <Color x:Key="SurfaceElevated">#21332E</Color>
+    <Color x:Key="Scrim">#99000000</Color>
+
+    <!-- Text -->
+    <Color x:Key="TextPrimary">#E6EFEC</Color>
+    <Color x:Key="TextSecondary">#A7B9B3</Color>
+    <Color x:Key="TextTertiary">#7A8E88</Color>
+    <Color x:Key="TextDisabled">#4D615B</Color>
+    <Color x:Key="TextInverse">#10201C</Color>
+
+    <!-- Lines -->
+    <Color x:Key="Outline">#273934</Color>
+    <Color x:Key="OutlineStrong">#3A514A</Color>
+
+    <!-- Brand -->
+    <Color x:Key="Primary">#5FD4BC</Color>
+    <Color x:Key="PrimaryPressed">#45BBA3</Color>
+    <Color x:Key="OnPrimary">#00382F</Color>
+    <Color x:Key="PrimaryContainer">#0F4A40</Color>
+    <Color x:Key="OnPrimaryContainer">#BFEFE3</Color>
+
+    <!-- AI / accent -->
+    <Color x:Key="Accent">#6FD8E3</Color>
+    <Color x:Key="OnAccent">#00363D</Color>
+    <Color x:Key="AccentContainer">#0E4A52</Color>
+    <Color x:Key="OnAccentContainer">#C5F1F5</Color>
+
+    <!-- Status -->
+    <Color x:Key="Success">#62CC8C</Color>
+    <Color x:Key="SuccessContainer">#143F2A</Color>
+    <Color x:Key="OnSuccessContainer">#BFEFD0</Color>
+    <Color x:Key="Warning">#F0A558</Color>
+    <Color x:Key="WarningContainer">#482D13</Color>
+    <Color x:Key="OnWarningContainer">#FBDDB8</Color>
+    <Color x:Key="Danger">#F17469</Color>
+    <Color x:Key="DangerContainer">#4B1F1B</Color>
+    <Color x:Key="OnDangerContainer">#FAC6C1</Color>
+    <Color x:Key="Info">#76B0F1</Color>
+    <Color x:Key="InfoContainer">#163353</Color>
+    <Color x:Key="OnInfoContainer">#CFE3FA</Color>
+
+    <!-- Vital accent colours -->
+    <Color x:Key="MetricWeight">#B7A8FF</Color>
+    <Color x:Key="MetricBloodPressure">#F17469</Color>
+    <Color x:Key="MetricHeartRate">#F48FB1</Color>
+    <Color x:Key="MetricBloodSugar">#F0A558</Color>
+    <Color x:Key="MetricSpO2">#76B0F1</Color>
+    <Color x:Key="MetricTemperature">#5FD4BC</Color>
+
+    <!-- Lab panel accent colours -->
+    <Color x:Key="LabLipid">#F0B25C</Color>
+    <Color x:Key="LabKidney">#76B0F1</Color>
+    <Color x:Key="LabLiver">#C39BF2</Color>
+    <Color x:Key="LabBlood">#F17469</Color>
+    <Color x:Key="LabDiabetes">#F08FC0</Color>
+    <Color x:Key="LabThyroid">#5FD4BC</Color>
+    <Color x:Key="LabElectrolyte">#5CC8DA</Color>
+    <Color x:Key="LabVitamin">#DCC05A</Color>
+    <Color x:Key="LabInfection">#B7A8FF</Color>
+    <Color x:Key="LabUrine">#CFCB62</Color>
+    <Color x:Key="LabCardiac">#F48FB1</Color>
+    <Color x:Key="LabOther">#A7B9B3</Color>
+
+    <!-- Shell / chrome -->
+    <Color x:Key="NavBarBackground">#0B1412</Color>
+    <Color x:Key="NavBarForeground">#E6EFEC</Color>
+    <Color x:Key="TabBarBackground">#131F1C</Color>
+    <Color x:Key="TabBarSelected">#5FD4BC</Color>
+    <Color x:Key="TabBarUnselected">#7A8E88</Color>
+    <Color x:Key="StatusBar">#0B1412</Color>
+
+    <SolidColorBrush x:Key="OutlineBrush" Color="#273934"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#5FD4BC"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#131F1C"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#F17469"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#62CC8C"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#F0A558"/>
+    <SolidColorBrush x:Key="TransparentBrush" Color="Transparent"/>
+    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0F6B5D" Offset="0"/>
+        <GradientStop Color="#0A4350" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AccentHeroBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0F7480" Offset="0"/>
+        <GradientStop Color="#0A3F50" Offset="1"/>
+    </LinearGradientBrush>
+    <Color x:Key="OnHero">#FFFFFF</Color>
+    <Color x:Key="OnHeroMuted">#BFE6DD</Color>
+    <Color x:Key="HeroChipFill">#33FFFFFF</Color>
+    <Color x:Key="ShadowColor">#000000</Color>
+
+    <!-- Toolbar icons: Android Shell does not tint ToolbarItem images, so each theme picks a pre-coloured file. -->
+    <FileImageSource x:Key="ToolbarIconDelete" File="ic_delete_light.png"/>
+    <FileImageSource x:Key="ToolbarIconDocumentScanner" File="ic_document_scanner_light.png"/>
+    <FileImageSource x:Key="ToolbarIconEdit" File="ic_edit_light.png"/>
+    <FileImageSource x:Key="ToolbarIconHistory" File="ic_history_light.png"/>
+    <FileImageSource x:Key="ToolbarIconMedication" File="ic_medication_light.png"/>
+    <FileImageSource x:Key="ToolbarIconSettings" File="ic_settings_light.png"/>
+    <FileImageSource x:Key="ToolbarIconAskAi" File="ic_assistant_accent_dark.png"/>
+</ResourceDictionary>

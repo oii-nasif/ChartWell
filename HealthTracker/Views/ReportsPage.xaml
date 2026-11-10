@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             x:Class="HealthTracker.Views.ReportsPage"
+             Title="Reports">
+
+    <Grid>
+        <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding GroupedReports}" IsGrouped="True">
+
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,8,16,4" Spacing="10">
+                        <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                            <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                        </Border>
+
+                        <SearchBar Placeholder="Search title, doctor or hospital"
+                                   Text="{Binding SearchText}"
+                                   SemanticProperties.Description="Search reports"/>
+
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="0,0,0,4">
+                            <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding TypeFilters}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Chip}" Padding="16,0" HeightRequest="40" MinimumWidthRequest="44"
+                                                BackgroundColor="{Binding BackgroundToken, Converter={StaticResource ThemeColorConverter}}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnTypeFilterTapped" CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Label Text="{Binding Label}" Style="{StaticResource ChipText}" FontSize="13"
+                                                   TextColor="{Binding TextToken, Converter={StaticResource ThemeColorConverter}}"
+                                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </HorizontalStackLayout>
+                        </ScrollView>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding Title}" Style="{StaticResource Overline}" Margin="20,16,20,6"/>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <SwipeView>
+                            <SwipeView.RightItems>
+                                <SwipeItems Mode="Reveal">
+                                    <SwipeItem Text="Delete" IconImageSource="{DynamicResource ToolbarIconDelete}" Invoked="OnDeleteInvoked"/>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+
+                            <Border Style="{StaticResource Card}" Margin="16,6" Padding="12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnReportTapped" CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" Style="{StaticResource IconCircle}">
+                                        <controls:TintedImage Source="{Binding IconSource}" Aspect="AspectFit" TintColor="{DynamicResource OnPrimaryContainer}"/>
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                        <Label Text="{Binding Title}" Style="{StaticResource TitleSmall}"
+                                               LineBreakMode="TailTruncation" MaxLines="1"/>
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Border Style="{StaticResource ChipPrimary}" Padding="8,2">
+                                                <Label Text="{Binding ReportType}" Style="{StaticResource ChipTextPrimary}"/>
+                                            </Border>
+                                            <Label Text="{Binding DateText}" Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                                            <Border Style="{StaticResource Chip}" Padding="8,2" IsVisible="{Binding HasMultiplePages}">
+                                                <Label Text="{Binding PageCountText}" Style="{StaticResource ChipText}"/>
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding DoctorHospitalText}" Style="{StaticResource Caption}"
+                                               IsVisible="{Binding HasDoctorHospital}"
+                                               LineBreakMode="TailTruncation" MaxLines="1"/>
+                                    </VerticalStackLayout>
+
+                                    <controls:TintedImageButton Grid.Column="2" Source="ic_more_vert.png" Style="{StaticResource IconButton}"
+                                                 VerticalOptions="Center" Clicked="OnMoreClicked" CommandParameter="{Binding .}"
+                                                 SemanticProperties.Description="Report actions" TintColor="{DynamicResource TextSecondary}"/>
+
+                                    <controls:TintedImage Grid.Column="3" Source="ic_chevron_right.png" WidthRequest="24" HeightRequest="24"
+                                           VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                                </Grid>
+                            </Border>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="88" Color="Transparent"/>
+                </CollectionView.Footer>
+
+                <CollectionView.EmptyView>
+                    <!-- Hidden until the first load completes so the empty state doesn't flash. BindingContext is set in code-behind. -->
+                    <Grid x:Name="EmptyState" IsVisible="{Binding IsEmpty}">
+                        <controls:EmptyStateView Icon="{Binding EmptyIcon}"
+                                                 Title="{Binding EmptyTitle}"
+                                                 Message="{Binding EmptyMessage}"
+                                                 ActionText="{Binding EmptyActionText}"
+                                                 ActionCommand="{Binding AddCommand}"/>
+                    </Grid>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Command="{Binding AddCommand}"
+                     SemanticProperties.Description="Add report" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

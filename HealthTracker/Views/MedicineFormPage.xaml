@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MedicineFormPage"
+             x:DataType="vm:MedicineFormViewModel"
+             Title="{Binding PageTitle}">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="16" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                </Border>
+
+                <!-- Medicine -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Medicine" Style="{StaticResource TitleSmall}"/>
+
+                        <VerticalStackLayout Spacing="0">
+                            <Label Text="Name" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding Name}" Placeholder="e.g. Metformin 500 mg" ReturnType="Next"
+                                       SemanticProperties.Description="Medicine name"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="0">
+                            <Label Text="Form" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding StockUnitOptions}" SelectedItem="{Binding StockUnit}" Title="Tablet, capsule, syrup…"
+                                        SemanticProperties.Description="Medicine form"/>
+                            </Border>
+                            <Label Text="Also used as the stock unit." Style="{StaticResource FieldHint}"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="0">
+                            <Label Text="Instructions (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding Instructions}" Placeholder="e.g. Take after food" ReturnType="Next"
+                                       SemanticProperties.Description="Instructions"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Schedule -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <Label Grid.Column="0" Text="Schedule" Style="{StaticResource TitleSmall}" VerticalOptions="Center"/>
+                            <Label Grid.Column="1" Text="Ongoing" Style="{StaticResource BodySecondary}" VerticalOptions="Center"/>
+                            <Switch Grid.Column="2" IsToggled="{Binding IsOngoing}" VerticalOptions="Center"
+                                    SemanticProperties.Description="Ongoing medicine with no end date"/>
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="0" IsVisible="{Binding IsPrescribedDaysVisible}">
+                            <Label Text="Prescribed days" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding PrescribedDaysText}" Placeholder="e.g. 7" Keyboard="Numeric"
+                                       SemanticProperties.Description="Prescribed days"/>
+                            </Border>
+                            <Label Text="{Binding EndDateHint}" Style="{StaticResource FieldHint}"/>
+                        </VerticalStackLayout>
+                        <Label Text="{Binding EndDateHint}" Style="{StaticResource FieldHint}" IsVisible="{Binding IsOngoing}" Margin="4,-6,0,0"/>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="0">
+                                <Label Text="Start date" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <DatePicker Date="{Binding StartDate}" Format="dd MMM yyyy" SemanticProperties.Description="Start date"/>
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="0">
+                                <Label Text="Start time" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <TimePicker Time="{Binding StartTime}" Format="HH:mm" SemanticProperties.Description="Start time"/>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Label Text="Started in the past? After saving you can log the doses you already took." Style="{StaticResource FieldHint}"
+                               IsVisible="{Binding StartsInPast}" Margin="4,-6,0,0"/>
+
+                        <BoxView Style="{StaticResource Divider}"/>
+
+                        <Label Text="Dose times" Style="{StaticResource FieldLabel}" Margin="4,0,0,0"/>
+
+                        <!-- Quick presets -->
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="Once daily 08:00" Style="{StaticResource SmallOutlineButton}" Command="{Binding ApplyPresetCommand}" CommandParameter="1"/>
+                                <Button Text="Twice 08:00 + 20:00" Style="{StaticResource SmallOutlineButton}" Command="{Binding ApplyPresetCommand}" CommandParameter="2"/>
+                                <Button Text="Three times" Style="{StaticResource SmallOutlineButton}" Command="{Binding ApplyPresetCommand}" CommandParameter="3"/>
+                                <Button Text="Four times" Style="{StaticResource SmallOutlineButton}" Command="{Binding ApplyPresetCommand}" CommandParameter="4"/>
+                            </HorizontalStackLayout>
+                        </ScrollView>
+
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Schedules}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ScheduleEntry">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                        <controls:TintedImage Grid.Column="0" Source="ic_alarm.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" TintColor="{DynamicResource Primary}"/>
+                                        <Border Grid.Column="1" Style="{StaticResource InputBorder}">
+                                            <TimePicker Time="{Binding Time}" Format="HH:mm" SemanticProperties.Description="Dose time"/>
+                                        </Border>
+                                        <controls:TintedImageButton Grid.Column="2" Source="ic_close.png" Style="{StaticResource IconButton}" VerticalOptions="Center"
+                                                     IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineFormViewModel}}, Path=CanRemoveSchedule}"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MedicineFormViewModel}}, Path=RemoveScheduleCommand}"
+                                                     CommandParameter="{Binding .}"
+                                                     SemanticProperties.Description="Remove this dose time" TintColor="{DynamicResource TextSecondary}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Button Text="Add another time" Style="{StaticResource SmallTextButton}" Command="{Binding AddScheduleCommand}"
+                                HorizontalOptions="Start"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Stock -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Stock" Style="{StaticResource TitleSmall}"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="0">
+                                <Label Text="Doses on hand" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry Text="{Binding StockText}" Placeholder="e.g. 30" Keyboard="Numeric" SemanticProperties.Description="Stock count"/>
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="End">
+                                <Border Style="{StaticResource Chip}" Margin="0,0,0,8">
+                                    <Label Text="{Binding StockUnit}" Style="{StaticResource ChipText}"/>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Label Text="{Binding StockHint}" Style="{StaticResource FieldHint}" Margin="4,-8,0,0"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Notes -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Notes (optional)" Style="{StaticResource TitleSmall}"/>
+                        <Border Style="{StaticResource InputBorderMultiline}">
+                            <Editor Text="{Binding Notes}" Placeholder="Anything else worth remembering: who prescribed it, side effects to watch…"
+                                    SemanticProperties.Description="Notes"/>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Pinned save -->
+        <Border Grid.Row="1" BackgroundColor="{DynamicResource Surface}" StrokeThickness="0" StrokeShape="Rectangle" Padding="16,12,16,16">
+            <Grid>
+                <Button Text="{Binding SaveButtonText}" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{DynamicResource OnPrimary}"
+                                   WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

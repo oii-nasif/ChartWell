@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="HealthTracker.Controls.PinPadView"
+             x:Name="Root">
+    <ContentView.Resources>
+        <!-- Round digit key: 72px circle, large digit, Surface background. -->
+        <Style x:Key="PinKey" TargetType="Button">
+            <Setter Property="WidthRequest" Value="72"/>
+            <Setter Property="HeightRequest" Value="72"/>
+            <Setter Property="CornerRadius" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontFamily" Value="AppSemibold"/>
+            <Setter Property="BackgroundColor" Value="{DynamicResource Surface}"/>
+            <Setter Property="TextColor" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal"/>
+                        <VisualState x:Name="Pressed">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+        <!-- Icon key (backspace / fingerprint): same footprint, transparent background. -->
+        <Style x:Key="PinIconKey" TargetType="ImageButton">
+            <Setter Property="WidthRequest" Value="72"/>
+            <Setter Property="HeightRequest" Value="72"/>
+            <Setter Property="CornerRadius" Value="36"/>
+            <Setter Property="Padding" Value="22"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal"/>
+                        <VisualState x:Name="Pressed">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceVariant}"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+    </ContentView.Resources>
+
+    <Grid BindingContext="{x:Reference Root}"
+          RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*,*"
+          RowSpacing="12" ColumnSpacing="12" HorizontalOptions="Center"
+          IsEnabled="{Binding IsKeypadEnabled}">
+        <Button Grid.Row="0" Grid.Column="0" Text="1" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="1"/>
+        <Button Grid.Row="0" Grid.Column="1" Text="2" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="2"/>
+        <Button Grid.Row="0" Grid.Column="2" Text="3" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="3"/>
+        <Button Grid.Row="1" Grid.Column="0" Text="4" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="4"/>
+        <Button Grid.Row="1" Grid.Column="1" Text="5" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="5"/>
+        <Button Grid.Row="1" Grid.Column="2" Text="6" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="6"/>
+        <Button Grid.Row="2" Grid.Column="0" Text="7" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="7"/>
+        <Button Grid.Row="2" Grid.Column="1" Text="8" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="8"/>
+        <Button Grid.Row="2" Grid.Column="2" Text="9" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="9"/>
+
+        <!-- Bottom row: fingerprint (optional) · 0 · backspace -->
+        <controls:TintedImageButton Grid.Row="3" Grid.Column="0" Source="ic_fingerprint.png" Style="{StaticResource PinIconKey}"
+                     Command="{Binding BiometricCommand}" IsVisible="{Binding ShowBiometric}"
+                     SemanticProperties.Description="Unlock with fingerprint or face" TintColor="{DynamicResource Primary}"/>
+        <Button Grid.Row="3" Grid.Column="1" Text="0" Style="{StaticResource PinKey}" Command="{Binding DigitCommand}" CommandParameter="0"/>
+        <controls:TintedImageButton Grid.Row="3" Grid.Column="2" Source="ic_close.png" Style="{StaticResource PinIconKey}"
+                     Command="{Binding BackspaceCommand}"
+                     SemanticProperties.Description="Delete last digit" TintColor="{DynamicResource TextSecondary}"/>
+    </Grid>
+</ContentView>

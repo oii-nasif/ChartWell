@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.MetricHistoryPage"
+             x:Name="Page"
+             x:DataType="vm:MetricHistoryViewModel"
+             Title="{Binding DisplayName}">
+
+    <ContentPage.Resources>
+        <!-- Promotion candidates: a range/filter chip that is tall enough to tap (44) -->
+        <Style x:Key="RangeChip" TargetType="Border" BasedOn="{StaticResource Chip}">
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="MinimumHeightRequest" Value="40"/>
+            <Setter Property="MinimumWidthRequest" Value="56"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="Stroke" Value="{DynamicResource Outline}"/>
+        </Style>
+        <Style x:Key="RangeChipText" TargetType="Label" BasedOn="{StaticResource ChipText}">
+            <Setter Property="HorizontalTextAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style x:Key="StatTile" TargetType="Border" BasedOn="{StaticResource CardFlat}">
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid>
+        <CollectionView ItemsSource="{Binding History}" Margin="{StaticResource ListPadding}">
+
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="12" Margin="0,0,0,4">
+                    <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                        <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                    </Border>
+
+                    <!-- Icon + name + unit -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="4,4,4,0">
+                        <Border Grid.Column="0" Style="{StaticResource IconCircle}"
+                                BackgroundColor="{DynamicResource SurfaceVariant}">
+                            <controls:TintedImage Source="{Binding Icon}" Aspect="AspectFit" TintColor="{Binding AccentToken, Converter={StaticResource ThemeColorConverter}}"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                            <Label Text="{Binding DisplayName}" Style="{StaticResource TitleLarge}"
+                                   SemanticProperties.HeadingLevel="Level1"/>
+                            <Label Text="{Binding Unit, StringFormat='Measured in {0}'}" Style="{StaticResource Caption}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Range chips -->
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8" HeightRequest="44">
+                        <Border Grid.Column="0" Style="{StaticResource RangeChip}" HorizontalOptions="Fill"
+                                SemanticProperties.Description="Last 7 days">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Is7Days}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetRangeCommand}" CommandParameter="7"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="7d" Style="{StaticResource RangeChipText}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Is7Days}" Value="True">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource RangeChip}" HorizontalOptions="Fill"
+                                SemanticProperties.Description="Last 30 days">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Is30Days}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetRangeCommand}" CommandParameter="30"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="30d" Style="{StaticResource RangeChipText}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Is30Days}" Value="True">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource RangeChip}" HorizontalOptions="Fill"
+                                SemanticProperties.Description="Last 90 days">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Is90Days}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetRangeCommand}" CommandParameter="90"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="90d" Style="{StaticResource RangeChipText}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Is90Days}" Value="True">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                        <Border Grid.Column="3" Style="{StaticResource RangeChip}" HorizontalOptions="Fill"
+                                SemanticProperties.Description="All time">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsAllTime}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryContainer}"/>
+                                    <Setter Property="Stroke" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetRangeCommand}" CommandParameter="0"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="All" Style="{StaticResource RangeChipText}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsAllTime}" Value="True">
+                                        <Setter Property="TextColor" Value="{DynamicResource OnPrimaryContainer}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+
+                    <!-- Chart -->
+                    <Border Style="{StaticResource Card}" Margin="0" Padding="12,12,12,4" IsVisible="{Binding HasChart}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding RangeLabel}" Style="{StaticResource Overline}" Margin="4,0"/>
+                            <lvc:CartesianChart Series="{Binding Series}"
+                                                XAxes="{Binding XAxes}"
+                                                YAxes="{Binding YAxes}"
+                                                HeightRequest="240"
+                                                TooltipPosition="Top"
+                                                TooltipTextPaint="{Binding TooltipTextPaint}"
+                                                TooltipBackgroundPaint="{Binding TooltipBackgroundPaint}"
+                                                LegendPosition="{Binding LegendPosition}"
+                                                LegendTextPaint="{Binding LegendTextPaint}"
+                                                SemanticProperties.Description="Trend chart"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Stats 2x2 -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12"
+                          IsVisible="{Binding HasReadingsInRange}">
+                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource StatTile}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Latest" Style="{StaticResource Overline}"/>
+                                <Label Text="{Binding LatestText}" Style="{StaticResource StatValue}"
+                                       TextColor="{Binding AccentToken, Converter={StaticResource ThemeColorConverter}}"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding LatestDateText}" Style="{StaticResource Caption}" LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource StatTile}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Average" Style="{StaticResource Overline}"/>
+                                <Label Text="{Binding AverageText}" Style="{StaticResource StatValue}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Unit}" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource StatTile}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Lowest" Style="{StaticResource Overline}"/>
+                                <Label Text="{Binding MinText}" Style="{StaticResource StatValue}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Unit}" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource StatTile}">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Highest" Style="{StaticResource Overline}"/>
+                                <Label Text="{Binding MaxText}" Style="{StaticResource StatValue}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Unit}" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <!-- Trend row -->
+                    <HorizontalStackLayout Spacing="8" Margin="4,0" IsVisible="{Binding HasReadingsInRange}">
+                        <controls:TintedImage Source="{Binding TrendIcon}" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" TintColor="{Binding TrendToken, Converter={StaticResource ThemeColorConverter}}"/>
+                        <Label Text="{Binding TrendText}" Style="{StaticResource BodyStrong}"
+                               TextColor="{Binding TrendToken, Converter={StaticResource ThemeColorConverter}}"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <controls:SectionHeaderView Title="{Binding ReadingsHeader}" IsVisible="{Binding HasReadingsInRange}"/>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+
+            <CollectionView.EmptyView>
+                <controls:EmptyStateView x:Name="EmptyState" Icon="ic_insights.png"
+                                         Title="No readings in this range"
+                                         Message="Try a wider range, or add a reading to start tracking."
+                                         ActionText="Add reading"
+                                         ActionCommand="{Binding AddReadingCommand}"/>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:MetricReadingItem">
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Delete" IconImageSource="{DynamicResource ToolbarIconDelete}"
+                                           BackgroundColor="{DynamicResource Danger}"
+                                           Invoked="OnDeleteInvoked"/>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnReadingTapped" CommandParameter="{Binding .}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Style="{StaticResource Card}" Margin="0" Padding="14,12" InputTransparent="True"
+                                    MinimumHeightRequest="64">
+                                <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="12">
+                                    <BoxView Grid.Column="0" WidthRequest="4" CornerRadius="2" VerticalOptions="Fill"
+                                             Color="{Binding AccentToken, Converter={StaticResource ThemeColorConverter}}"/>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <HorizontalStackLayout Spacing="4">
+                                            <Label Text="{Binding ValueText}" Style="{StaticResource TitleMedium}" VerticalOptions="End"/>
+                                            <Label Text="{Binding Unit}" Style="{StaticResource BodySecondary}" VerticalOptions="End" Margin="0,0,0,1"/>
+                                        </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="6">
+                                            <Label Text="{Binding DateText}" Style="{StaticResource Caption}"/>
+                                            <Label Text="{Binding TimeText, StringFormat='· {0}'}" Style="{StaticResource Caption}"
+                                                   IsVisible="{Binding HasTime}"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding Notes}" Style="{StaticResource Caption}"
+                                               TextColor="{DynamicResource TextTertiary}" MaxLines="2"
+                                               LineBreakMode="TailTruncation" IsVisible="{Binding HasNotes}"/>
+                                    </VerticalStackLayout>
+                                    <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                           VerticalOptions="Center" SemanticProperties.Description="Edit reading" TintColor="{DynamicResource TextTertiary}"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddClicked"
+                     SemanticProperties.Description="Add reading" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

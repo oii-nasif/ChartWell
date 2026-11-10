@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home-screen widget (dark mode). Keep every name in sync with values/colors.xml. -->
+    <color name="widget_bg">#131F1C</color>
+    <color name="widget_stroke">#273934</color>
+    <color name="widget_divider">#273934</color>
+    <color name="widget_title">#E6EFEC</color>
+    <color name="widget_text_primary">#E6EFEC</color>
+    <color name="widget_text_secondary">#A7B9B3</color>
+    <color name="widget_accent">#5FD4BC</color>
+    <color name="widget_progress_track">#1C2B27</color>
+    <color name="widget_heart">#FF7B6B</color>
+    <color name="widget_bp">#F28B82</color>
+</resources>

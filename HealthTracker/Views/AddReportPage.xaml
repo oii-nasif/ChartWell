@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="HealthTracker.Views.AddReportPage"
+             Title="Add report">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="16" Padding="{StaticResource PagePadding}">
+
+                <Border Style="{StaticResource ErrorBanner}" IsVisible="{Binding HasError}">
+                    <Label Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}"/>
+                </Border>
+
+                <!-- Step 1: pages -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Pages" Style="{StaticResource TitleSmall}"/>
+                            <Border Grid.Column="1" Style="{StaticResource Chip}" IsVisible="{Binding HasPages}">
+                                <Label Text="{Binding PageCountText}" Style="{StaticResource ChipText}"/>
+                            </Border>
+                        </Grid>
+                        <Label Text="Add a photo or PDF for each page. Photos are read automatically to fill in the details."
+                               Style="{StaticResource Caption}"/>
+
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" IsVisible="{Binding HasPages}">
+                            <HorizontalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Pages}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <VerticalStackLayout Spacing="4" WidthRequest="96">
+                                            <Grid WidthRequest="96" HeightRequest="96">
+                                                <Border BackgroundColor="{DynamicResource SurfaceVariant}"
+                                                        Stroke="{DynamicResource Outline}" StrokeThickness="1"
+                                                        StrokeShape="RoundRectangle 12" Padding="0">
+                                                    <Grid>
+                                                        <Image Source="{Binding Thumbnail}" Aspect="AspectFill" IsVisible="{Binding IsImage}"
+                                                               SemanticProperties.Description="{Binding PageLabel}"/>
+                                                        <controls:TintedImage Source="ic_picture_as_pdf.png" WidthRequest="36" HeightRequest="36"
+                                                               HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding IsPdf}"
+                                                               SemanticProperties.Description="PDF page" TintColor="{DynamicResource Primary}"/>
+                                                    </Grid>
+                                                </Border>
+                                                <controls:TintedImageButton Source="ic_close.png" Style="{StaticResource IconButton}"
+                                                             WidthRequest="44" HeightRequest="44" Padding="12"
+                                                             BackgroundColor="{DynamicResource Surface}" CornerRadius="22"
+                                                             HorizontalOptions="End" VerticalOptions="Start" Margin="0,-8,-8,0"
+                                                             Clicked="OnRemovePageClicked" CommandParameter="{Binding .}"
+                                                             SemanticProperties.Description="Remove page" TintColor="{DynamicResource Danger}"/>
+                                            </Grid>
+                                            <Label Text="{Binding PageLabel}" Style="{StaticResource Caption}" HorizontalTextAlignment="Center"/>
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </HorizontalStackLayout>
+                        </ScrollView>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0" Text="Take photo" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding CapturePhotoCommand}"
+                                    IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Button Grid.Column="1" Text="Pick file" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding PickFileCommand}"
+                                    IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBoolConverter}}"/>
+                        </Grid>
+
+                        <!-- OCR / AI progress row -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" IsVisible="{Binding ShowProgressRow}">
+                            <ActivityIndicator Grid.Column="0" WidthRequest="20" HeightRequest="20" VerticalOptions="Center"
+                                               IsRunning="{Binding IsScanning}" IsVisible="{Binding IsScanning}"/>
+                            <Label Grid.Column="1" Text="{Binding ScanStatus}" Style="{StaticResource Caption}" VerticalOptions="Center"/>
+                            <Border Grid.Column="2" Style="{StaticResource ChipAccent}" IsVisible="{Binding IsAiMode}" VerticalOptions="Center">
+                                <Label Text="{Binding ScanModeLabel}" Style="{StaticResource ChipTextAccent}"/>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource Chip}" VerticalOptions="Center"
+                                    IsVisible="{Binding IsAiMode, Converter={StaticResource InverseBoolConverter}}">
+                                <Label Text="{Binding ScanModeLabel}" Style="{StaticResource ChipText}"/>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- AI unavailable notice -->
+                <Border Style="{StaticResource CardInfo}" IsVisible="{Binding HasAiNotice}" Padding="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto">
+                        <controls:TintedImage Grid.Row="0" Grid.Column="0" Source="ic_info.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Start" TintColor="{DynamicResource OnInfoContainer}"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding AiNoticeText}" Style="{StaticResource Caption}"
+                               TextColor="{DynamicResource OnInfoContainer}"/>
+                        <Button Grid.Row="1" Grid.Column="1" Text="Open Settings" Style="{StaticResource SmallTextButton}"
+                                HorizontalOptions="Start" Margin="-10,0,0,0" Command="{Binding OpenSettingsCommand}"
+                                IsVisible="{Binding ShowSettingsAction}"/>
+                    </Grid>
+                </Border>
+
+                <!-- AI filled banner -->
+                <Border Style="{StaticResource CardAccent}" IsVisible="{Binding ShowAiBanner}" Padding="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <controls:TintedImage Grid.Column="0" Source="ic_auto_awesome.png" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" TintColor="{DynamicResource OnAccentContainer}"/>
+                        <Label Grid.Column="1" Text="AI filled these fields — please check them before saving."
+                               Style="{StaticResource BodyStrong}" TextColor="{DynamicResource OnAccentContainer}" VerticalOptions="Center"/>
+                        <controls:TintedImageButton Grid.Column="2" Source="ic_close.png" Style="{StaticResource IconButton}"
+                                     Command="{Binding DismissBannerCommand}" SemanticProperties.Description="Dismiss" TintColor="{DynamicResource OnAccentContainer}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Step 2: details -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Details" Style="{StaticResource TitleSmall}"/>
+
+                        <VerticalStackLayout>
+                            <Label Text="Title" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding Title}" Placeholder="e.g. Complete blood count"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Type" Style="{StaticResource FieldLabel}"/>
+                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding TypeOptions}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource Chip}" Padding="16,0" HeightRequest="40" MinimumWidthRequest="44"
+                                                    BackgroundColor="{Binding BackgroundToken, Converter={StaticResource ThemeColorConverter}}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnTypeTapped" CommandParameter="{Binding .}"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Name}" Style="{StaticResource ChipText}" FontSize="13"
+                                                       TextColor="{Binding TextToken, Converter={StaticResource ThemeColorConverter}}"
+                                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                            </ScrollView>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Report date" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <DatePicker Date="{Binding ReportDate}" Format="dd MMM yyyy"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Step 3: source -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Source" Style="{StaticResource TitleSmall}"/>
+
+                        <VerticalStackLayout>
+                            <Label Text="Doctor (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding DoctorName}" Placeholder="e.g. Dr. Rahman"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Hospital or lab (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Entry Text="{Binding Hospital}" Placeholder="e.g. City Diagnostics"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout>
+                            <Label Text="Link to doctor visit (optional)" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}">
+                                <Picker ItemsSource="{Binding VisitOptions}" ItemDisplayBinding="{Binding Label}"
+                                        SelectedItem="{Binding SelectedVisit}" Title="Not linked"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Step 4: notes -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Notes (optional)" Style="{StaticResource TitleSmall}"/>
+                        <Label Text="Key findings read from the report appear here so you can review them."
+                               Style="{StaticResource Caption}"/>
+                        <Border Style="{StaticResource InputBorderMultiline}">
+                            <Editor Text="{Binding Notes}" Placeholder="Summary, key findings, anything to remember"/>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="16,8,16,16" BackgroundColor="{DynamicResource Surface}">
+            <Button Text="Save report" Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+        </Grid>
+
+        <ActivityIndicator Grid.Row="0" Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}"/>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.LabsPage"
+             x:DataType="vm:LabsViewModel"
+             Title="Lab results">
+
+    <Grid>
+        <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Groups}" IsGrouped="True">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,12,16,4" Spacing="12">
+                        <!-- Summary hero -->
+                        <Border Style="{StaticResource CardHero}" Margin="0">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                    <Label Text="Your labs" Style="{StaticResource HeroOverline}"/>
+                                    <Label Text="{Binding HeadlineText}" Style="{StaticResource HeroTitle}"
+                                           SemanticProperties.HeadingLevel="Level1"/>
+                                    <Label Text="{Binding SummaryText}" Style="{StaticResource HeroBody}"/>
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" Style="{StaticResource HeroChip}" Padding="12" StrokeShape="RoundRectangle 18"
+                                        VerticalOptions="Start" WidthRequest="52" HeightRequest="52">
+                                    <controls:TintedImage Source="ic_science.png" Aspect="AspectFit" TintColor="{DynamicResource OnHero}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                        </Border>
+
+                        <!-- View switch + filter (only once there is data) -->
+                        <VerticalStackLayout Spacing="10" IsVisible="{Binding HasData}">
+                            <Border Style="{StaticResource SegmentTrack}">
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
+                                    <Button Grid.Column="0" Text="By panel" Command="{Binding ShowByPanelCommand}" Style="{StaticResource SegmentButton}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding ByPanel}" Value="True">
+                                                <Setter Property="Style" Value="{StaticResource SegmentButtonSelected}"/>
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                    <Button Grid.Column="1" Text="By date" Command="{Binding ShowByDateCommand}" Style="{StaticResource SegmentButton}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding ByDate}" Value="True">
+                                                <Setter Property="Style" Value="{StaticResource SegmentButtonSelected}"/>
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource Chip}" Padding="12,8" IsVisible="{Binding HasAttention}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding AttentionOnly}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource WarningContainer}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleAttentionCommand}"/>
+                                </Border.GestureRecognizers>
+                                <HorizontalStackLayout Spacing="6">
+                                    <controls:TintedImage Source="ic_filter_list.png" WidthRequest="16" HeightRequest="16"
+                                                          VerticalOptions="Center" TintColor="{DynamicResource TextSecondary}"/>
+                                    <Label Text="{Binding AttentionChipText}" Style="{StaticResource ChipText}"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Label Text="Nothing to check right now. Turn the filter off to see every result."
+                               Style="{StaticResource BodySecondary}" IsVisible="{Binding IsFilteredEmpty}" Margin="4,8"/>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="vm:LabGroup">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Padding="20,14,12,8">
+                            <Border Grid.Column="0" Style="{StaticResource IconCircle}" WidthRequest="36" HeightRequest="36" Padding="8"
+                                    StrokeShape="RoundRectangle 12" BackgroundColor="{DynamicResource SurfaceVariant}">
+                                <controls:TintedImage Source="{Binding Icon}" Aspect="AspectFit"
+                                                      TintColor="{Binding ColorToken, Converter={StaticResource ThemeColorConverter}}"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                                <Label Text="{Binding Title}" Style="{StaticResource TitleSmall}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Subtitle}" Style="{StaticResource Caption}" IsVisible="{Binding HasSubtitle}"
+                                       LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+                            <Border Grid.Column="2" Style="{StaticResource ChipWarning}" Padding="8,2" VerticalOptions="Center"
+                                    IsVisible="{Binding HasAttention}">
+                                <Label Text="{Binding AttentionText}" Style="{StaticResource ChipTextWarning}"/>
+                            </Border>
+                            <controls:TintedImageButton Grid.Column="3" Source="ic_more_vert.png" Style="{StaticResource IconButton}"
+                                                        TintColor="{DynamicResource TextSecondary}" IsVisible="{Binding IsBatch}"
+                                                        Clicked="OnBatchMenuClicked" CommandParameter="{Binding .}"
+                                                        SemanticProperties.Description="More options for this set of results"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LabRowItem">
+                        <Border Style="{StaticResource Card}" Margin="16,0,16,8" Padding="14,12"
+                                SemanticProperties.Description="{Binding AccessibilityText}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                                    <Label Text="{Binding Title}" Style="{StaticResource BodyStrong}" LineBreakMode="TailTruncation"/>
+                                    <Label Text="{Binding Subtitle}" Style="{StaticResource Caption}" MaxLines="2" LineBreakMode="TailTruncation"/>
+                                    <HorizontalStackLayout Spacing="4" IsVisible="{Binding HasTrend}">
+                                        <controls:TintedImage Source="{Binding TrendIcon}" WidthRequest="14" HeightRequest="14"
+                                                              VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                                        <Label Text="{Binding TrendText}" Style="{StaticResource Caption}" TextColor="{DynamicResource TextTertiary}"/>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center" HorizontalOptions="End">
+                                    <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
+                                        <Label Text="{Binding ValueText}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"
+                                               TextColor="{Binding ValueToken, Converter={StaticResource ThemeColorConverter}}"
+                                               VerticalOptions="End"/>
+                                        <Label Text="{Binding Unit}" Style="{StaticResource StatUnit}" IsVisible="{Binding HasUnit}"
+                                               VerticalOptions="End" Margin="0,0,0,3"/>
+                                    </HorizontalStackLayout>
+                                    <Border Style="{StaticResource Chip}" Padding="8,2" HorizontalOptions="End" IsVisible="{Binding HasFlag}"
+                                            BackgroundColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                        <Label Text="{Binding FlagText}" Style="{StaticResource ChipText}"
+                                               TextColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <Grid x:Name="EmptyState" IsVisible="{Binding IsEmpty}">
+                        <controls:EmptyStateView Icon="ic_science.png"
+                                                 Title="Track your lab results"
+                                                 Message="Lipid profile, creatinine, SGPT, HbA1c, hepatitis screening and more. Enter the values from a report and see what changed since last time."
+                                                 ActionText="Add results"
+                                                 ActionCommand="{Binding AddCommand}"/>
+                    </Grid>
+                </CollectionView.EmptyView>
+
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="20,8,20,96">
+                        <Label Text="Reference ranges are typical adult values and differ between laboratories. They are a guide, not a diagnosis."
+                               Style="{StaticResource Caption}" TextColor="{DynamicResource TextTertiary}"
+                               IsVisible="{Binding HasData}"/>
+                    </VerticalStackLayout>
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddClicked"
+                                    SemanticProperties.Description="Add lab results" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>

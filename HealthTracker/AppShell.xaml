@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:HealthTracker.Views"
+       x:Class="HealthTracker.AppShell">
+
+    <!--
+        Global toolbar: the AI assistant and Settings are reachable from every tab.
+        Page-specific actions live on the pages themselves (usually as a FAB or an in-page header).
+    -->
+    <Shell.ToolbarItems>
+        <ToolbarItem IconImageSource="{DynamicResource ToolbarIconAskAi}" Text="Ask AI" Order="Primary" Priority="0" Clicked="OnAskAiClicked"
+                     AutomationId="ToolbarAskAi"/>
+        <ToolbarItem IconImageSource="{DynamicResource ToolbarIconSettings}" Text="Settings" Order="Primary" Priority="1" Clicked="OnSettingsClicked"
+                     AutomationId="ToolbarSettings"/>
+    </Shell.ToolbarItems>
+
+    <!--
+        Five destinations. "Records" holds three pages that Shell shows as top tabs
+        (reports, doctor visits, the merged timeline). Routes are used by NavigationHelper.GoToTabAsync.
+    -->
+    <TabBar>
+        <Tab Title="Home" Icon="ic_home.png">
+            <ShellContent Route="today" ContentTemplate="{DataTemplate views:TodayPage}"/>
+        </Tab>
+        <Tab Title="Labs" Icon="ic_science.png">
+            <ShellContent Route="labs" ContentTemplate="{DataTemplate views:LabsPage}"/>
+        </Tab>
+        <Tab Title="Vitals" Icon="ic_monitor_heart.png">
+            <ShellContent Route="metrics" ContentTemplate="{DataTemplate views:MetricsDashboardPage}"/>
+        </Tab>
+        <Tab Title="Records" Icon="ic_folder_shared.png">
+            <ShellContent Title="Reports" Route="reports" ContentTemplate="{DataTemplate views:ReportsPage}"/>
+            <ShellContent Title="Visits" Route="doctors" ContentTemplate="{DataTemplate views:DoctorVisitsPage}"/>
+            <ShellContent Title="Timeline" Route="timeline" ContentTemplate="{DataTemplate views:TimelinePage}"/>
+        </Tab>
+        <Tab Title="Me" Icon="ic_person.png">
+            <ShellContent Route="me" ContentTemplate="{DataTemplate views:ProfilePage}"/>
+        </Tab>
+    </TabBar>
+</Shell>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HealthTracker.Controls"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
+             xmlns:vm="clr-namespace:HealthTracker.ViewModels"
+             x:Class="HealthTracker.Views.LabTestDetailPage"
+             x:DataType="vm:LabTestDetailViewModel"
+             Title="{Binding TestName}">
+
+    <Grid>
+        <CollectionView ItemsSource="{Binding History}">
+            <CollectionView.Header>
+                <VerticalStackLayout Padding="16,12,16,0" Spacing="12">
+
+                    <Border Style="{StaticResource ErrorBanner}" Margin="0" IsVisible="{Binding HasError}">
+                        <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorText}"/>
+                    </Border>
+
+                    <!-- Latest result -->
+                    <Border Style="{StaticResource Card}" Margin="0" Padding="18" IsVisible="{Binding HasData}">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Border Grid.Column="0" Style="{StaticResource IconCircle}" BackgroundColor="{DynamicResource SurfaceVariant}">
+                                    <controls:TintedImage Source="{Binding PanelIcon}" Aspect="AspectFit"
+                                                          TintColor="{Binding PanelToken, Converter={StaticResource ThemeColorConverter}}"/>
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                                    <Label Text="{Binding PanelName}" Style="{StaticResource Overline}"/>
+                                    <Label Text="{Binding LatestDateText}" Style="{StaticResource Caption}"/>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <HorizontalStackLayout Spacing="6">
+                                <Label Text="{Binding LatestValueText}" Style="{StaticResource DisplayText}" FontSize="40"
+                                       TextColor="{Binding ValueToken, Converter={StaticResource ThemeColorConverter}}"
+                                       VerticalOptions="End" SemanticProperties.HeadingLevel="Level1"/>
+                                <Label Text="{Binding LatestUnit}" Style="{StaticResource BodySecondary}" VerticalOptions="End" Margin="0,0,0,9"/>
+                            </HorizontalStackLayout>
+
+                            <Border Style="{StaticResource Chip}" IsVisible="{Binding HasFlag}"
+                                    BackgroundColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                <Label Text="{Binding FlagText}" Style="{StaticResource ChipText}"
+                                       TextColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                            </Border>
+
+                            <!-- Where the value sits against the reference range -->
+                            <VerticalStackLayout Spacing="4" IsVisible="{Binding HasRangeBar}" Margin="0,6,0,0"
+                                                 SemanticProperties.Description="{Binding ReferenceText}">
+                                <AbsoluteLayout HeightRequest="18">
+                                    <Border AbsoluteLayout.LayoutBounds="0,0.5,1,8" AbsoluteLayout.LayoutFlags="XProportional,YProportional,WidthProportional"
+                                            BackgroundColor="{DynamicResource SurfaceVariant}" StrokeShape="RoundRectangle 4"/>
+                                    <Border AbsoluteLayout.LayoutBounds="{Binding NormalZoneBounds}" AbsoluteLayout.LayoutFlags="All"
+                                            BackgroundColor="{DynamicResource Success}" Opacity="0.45" StrokeShape="RoundRectangle 4"
+                                            Margin="0,5"/>
+                                    <Border AbsoluteLayout.LayoutBounds="{Binding MarkerBounds}" AbsoluteLayout.LayoutFlags="PositionProportional"
+                                            BackgroundColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}}"
+                                            Stroke="{DynamicResource Surface}" StrokeThickness="3" StrokeShape="RoundRectangle 9"/>
+                                </AbsoluteLayout>
+                                <Label Text="{Binding ReferenceText}" Style="{StaticResource Caption}"/>
+                            </VerticalStackLayout>
+                            <Label Text="{Binding ReferenceText}" Style="{StaticResource Caption}" IsVisible="False">
+                                <Label.Triggers>
+                                    <MultiTrigger TargetType="Label">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding HasRangeBar}" Value="False"/>
+                                            <BindingCondition Binding="{Binding HasReference}" Value="True"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </MultiTrigger>
+                                </Label.Triggers>
+                            </Label>
+
+                            <Label Text="{Binding CalculatedText}" Style="{StaticResource Caption}"
+                                   TextColor="{DynamicResource TextTertiary}" IsVisible="{Binding IsCalculated}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Trend -->
+                    <Border Style="{StaticResource Card}" Margin="0" Padding="14,14,14,8" IsVisible="{Binding HasChart}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Trend" Style="{StaticResource TitleSmall}" Margin="4,0"/>
+                            <Label Text="{Binding ChangeText}" Style="{StaticResource Caption}" Margin="4,0" IsVisible="{Binding HasChange}"/>
+                            <lvc:CartesianChart Series="{Binding Series}" XAxes="{Binding XAxes}" YAxes="{Binding YAxes}"
+                                                Sections="{Binding Sections}" HeightRequest="220" TooltipPosition="Top"
+                                                TooltipTextPaint="{Binding TooltipTextPaint}"
+                                                TooltipBackgroundPaint="{Binding TooltipBackgroundPaint}"
+                                                SemanticProperties.Description="Trend chart of past results"/>
+                            <Label Text="{Binding ChartCaption}" Style="{StaticResource Caption}" TextColor="{DynamicResource TextTertiary}"
+                                   Margin="4,0,4,4"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Stats -->
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding HasStats}">
+                        <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0" Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Lowest" Style="{StaticResource Caption}"/>
+                                <Label Text="{Binding LowestText}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0" Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Highest" Style="{StaticResource Caption}"/>
+                                <Label Text="{Binding HighestText}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0" Padding="12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Results" Style="{StaticResource Caption}"/>
+                                <Label Text="{Binding CountText}" Style="{StaticResource TitleMedium}" FontFamily="AppBold"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <!-- What the test is -->
+                    <Border Style="{StaticResource CardInfo}" Margin="0" Padding="14" IsVisible="{Binding HasAbout}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <controls:TintedImage Grid.Column="0" Source="ic_info.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Start" TintColor="{DynamicResource Info}"/>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="{Binding About}" Style="{StaticResource Body}" TextColor="{DynamicResource OnInfoContainer}"/>
+                                <Label Text="General information only, not medical advice." Style="{StaticResource Caption}"
+                                       TextColor="{DynamicResource OnInfoContainer}" Opacity="0.8"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <Label Text="{Binding HistoryHeader}" Style="{StaticResource SectionHeader}" Margin="4,8,4,0"
+                           IsVisible="{Binding HasData}"/>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:LabRowItem">
+                    <Border Style="{StaticResource Card}" Margin="16,8,16,0" Padding="14,12"
+                            SemanticProperties.Description="{Binding AccessibilityText}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnResultTapped" CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                                <Label Text="{Binding Title}" Style="{StaticResource BodyStrong}"/>
+                                <Label Text="{Binding Subtitle}" Style="{StaticResource Caption}" MaxLines="2" LineBreakMode="TailTruncation"
+                                       IsVisible="{Binding Subtitle, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                <Label Text="{Binding Notes}" Style="{StaticResource Caption}" TextColor="{DynamicResource TextTertiary}"
+                                       IsVisible="{Binding HasNotes}" MaxLines="2" LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center" HorizontalOptions="End">
+                                <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
+                                    <Label Text="{Binding ValueText}" Style="{StaticResource TitleSmall}" FontFamily="AppBold"
+                                           TextColor="{Binding ValueToken, Converter={StaticResource ThemeColorConverter}}" VerticalOptions="End"/>
+                                    <Label Text="{Binding Unit}" Style="{StaticResource StatUnit}" IsVisible="{Binding HasUnit}"
+                                           VerticalOptions="End" Margin="0,0,0,2"/>
+                                </HorizontalStackLayout>
+                                <Border Style="{StaticResource Chip}" Padding="8,2" HorizontalOptions="End" IsVisible="{Binding HasFlag}"
+                                        BackgroundColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=Container}">
+                                    <Label Text="{Binding FlagText}" Style="{StaticResource ChipText}"
+                                           TextColor="{Binding FlagToken, Converter={StaticResource ThemeColorConverter}, ConverterParameter=OnContainer}"/>
+                                </Border>
+                            </VerticalStackLayout>
+                            <controls:TintedImage Grid.Column="2" Source="ic_chevron_right.png" WidthRequest="20" HeightRequest="20"
+                                                  VerticalOptions="Center" TintColor="{DynamicResource TextTertiary}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <Grid x:Name="EmptyState" IsVisible="{Binding IsEmpty}">
+                    <controls:EmptyStateView Icon="ic_science.png" Title="No results for this test"
+                                             Message="Add a result to start tracking it."/>
+                </Grid>
+            </CollectionView.EmptyView>
+
+            <CollectionView.Footer>
+                <BoxView HeightRequest="96" Color="Transparent"/>
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <ActivityIndicator Style="{StaticResource LoadingIndicator}" IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}"/>
+
+        <controls:TintedImageButton Source="ic_add.png" Style="{StaticResource Fab}" Clicked="OnAddClicked"
+                                    SemanticProperties.Description="Add a new result for this test" TintColor="{DynamicResource OnPrimary}"/>
+    </Grid>
+</ContentPage>
